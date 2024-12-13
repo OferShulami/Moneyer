@@ -141,26 +141,25 @@ class Account:
             the price per stock, and the sale date.
 
         Example:
-            >>> self.sell_stock('AAPL', 10, 150.0, '2024-12-01')
+            self.sell_stock('AAPL', 10, 150.0, '2024-12-01')
             This adds the sale information for the 'AAPL' ticker to `tickers_sell_dict`.
         """
     
-    # Ensure the ticker exists in the dictionary
-    if ticker not in self.tickers_buy_dict:
-        raise ValueError(f"You don't have this ticker in your account: {ticker}")
+        if ticker not in self.tickers_buy_dict:
+            raise ValueError(f"You don't have this ticker in your account: {ticker}")
 
-    if ticker not in self.tickers_sell_dict:
-        self.tickers_sell_dict[ticker] = {
-            "num": [],
-            "amount": [],
-            "price": [],
-            "date": []
-        }
+        if ticker not in self.tickers_sell_dict:
+            self.tickers_sell_dict[ticker] = {
+                "num": [],
+                "amount": [],
+                "price": [],
+                "date": []
+            }
 
-    if price_per_stock is None and sell_date is None:
-        raise ValueError("You are missing the date or price.")
+        if price_per_stock is None and sell_date is None:
+            raise ValueError("You are missing the date or price.")
 
-    calculate_func.super_update(self.tickers_sell_dict, ticker, amount, price_per_stock, sell_date)
+        calculate_func.super_update(self.tickers_sell_dict, ticker, amount, price_per_stock, sell_date)
 
 
     def show_buy_info(self):
