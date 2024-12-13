@@ -87,8 +87,26 @@ def main():
             option = input("Choose an option: ")
 
             if option == "a":
-                # Implement buy or sell logic
-                print("Buy or Sell functionality (not implemented yet)")
+                a = 0
+                while a == 0:
+                    answer = input("for buy select b and for sell select s\nto go back press q")
+
+                    if answer == "b":
+                        a = 1
+                        ticker = input("tiker: ")
+                        amount = int(input("amount: "))
+                        price = float(input("price per stock: "))
+                        date = input("the date in YYYY-MM-DD format: ")
+                    elif answer == "s":
+                        a = 1
+                        print("not avalible yet")
+                    elif answer == "q":
+                        a = 1
+                        print("returning to the menu")
+
+                    else:
+                        print("Invalid\nplease try again")
+
             elif option == "s":
                 # Show account details
                 print(f"Account details for {ofer.name}:")
