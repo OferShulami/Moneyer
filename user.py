@@ -2,60 +2,102 @@ import calculate_func
 
 
 class Account:
+    """
+    Represents an account for managing stock trades, including buying, selling, and portfolio tracking.
+
+    Attributes:
+        __type__ (str): Identifies the class as "Account".
+        name (str): The name of the account holder.
+        password (str): The password for the account.
+        tickers_buy_dict (dict): A dictionary containing details about purchased tickers.
+            Structure:
+                {
+                    ticker (str): {
+                        "num" (list[int]): List of trade numbers.
+                        "amount" (list[int]): List of amounts bought.
+                        "price" (list[float]): List of prices per share.
+                        "date" (list[str]): List of purchase dates.
+                    }
+                }
+        tickers_sell_dict (dict): A dictionary containing details about sold tickers.
+            Structure:
+                {
+                    ticker (str): {
+                        "num" (list[int]): List of trade numbers.
+                        "amount" (list[int]): List of amounts sold.
+                        "price" (list[float]): List of prices per share.
+                        "date" (list[str]): List of sale dates.
+                    }
+                }
+        account_dict (dict): A dictionary tracking the account's portfolio details.
+            Structure:
+                {
+                    ticker (str): {
+                        "amount" (int): Total amount of stock held.
+                        "initial price" (float): Initial purchase price per share.
+                        "current price" (float): Current market price per share.
+                        "stock value in Portfolio" (float): Current value of the stock in the portfolio.
+                        "Price Change" (float): Difference between current and initial stock value.
+                        "Percentage Change" (float): Percentage change in stock value from initial price.
+                        "percentage portfolio" (float): Percentage of the portfolio's total value represented by this stock.
+                    }
+                }
+
+    Methods:
+        __init__(name: str, password: str):
+            Initializes the Account with the given name, password, and empty dictionaries for tracking trades and portfolio details.
+    """
+
     def __init__(self, name: str, password: str) -> None:
-        self.__type__ = "Account"  # Add __type__ attribute to identify this class as "Account"
+        """
+        Initializes an Account object.
+
+        Args:
+            name (str): The name of the account holder.
+            password (str): The password for the account.
+        """
+
+        self.__type__ = "Account"  
         self.name = name
         self.password = password
+
         self.tickers_buy_dict = {}
-        # tickers_buy_dict = {
-        #    ticker1(str): {
-        #        "num": [1, 2...(int)],
-        #        "amount": [10, 13...(int)],
-        #        "price": [3000, 31231...(float)],
-        #        "date": ["2023-12-01", "2024-03-04"...(str)]
-        #    }
-        # }
         self.tickers_sell_dict = {}
-        # tickers_sell_dict = {
-        #    ticker1(str): {
-        #        "num": [1, 2...(int)],
-        #        "amount": [10, 13...(int)],
-        #        "price": [3000, 31231...(float)],
-        #        "date": ["2023-12-01", "2024-03-04"...(str)]
-        #    }
-        # }
         self.account_dict = {}
-        # accounts_dict = {
-        #    ticker1(str): {
-        #       "amount": 10 (int),
-        #       "initial price": 31.231 (float),
-        #       "current price": 34.233 (float),
-        #       "stock value in Portfolio": current price * amount (float)
-        #       "Price Change": stock value in Portfolio - initial price * amount
-        #       "Percentage Change": ( current price - initial price ) / initial price * 100
-        #       "percentage portfolio": (value of ticker / sum of all) * 100
-        #    }
-        # }
+
+
 
     def __repr__(self):
+        """
+        Returns a string representation of the Account object.
+
+        Returns:
+            str: A string displaying the account name and type.
+        """
         return f"Account(name={self.name}, __type__={self.__type__})"
 
     def buy_stock(self, ticker: str, amount: int, price_per_stock: float = None, buy_date: str = None) -> None:
         """
-        Add to the tickers_buy_dict this info: [amount(int), price(float), date(str, YYYY-MM-DD)].
-        :param ticker: str
-        :param amount: int
-        :param price_per_stock: float / None
-        :param buy_date: str (optional)
-        :return: None
+        Adds purchase details to the account for a specific stock.
+
+        Updates the tickers_buy_dict and account_dict with the provided details about a stock purchase.
+
+        Args:
+            ticker (str): The stock ticker symbol (e.g., "AAPL").
+            amount (int): The number of stocks purchased.
+            price_per_stock (float, optional): The purchase price per stock. Must not be None.
+            buy_date (str, optional): The date of purchase in the format 'YYYY-MM-DD'. Must not be None.
+
+        Raises:
+            ValueError: If either price_per_stock or buy_date is missing, or if the ticker or date is invalid.
         """
         ticker = ticker.upper()
 
-        #check if there is enough data
+        # Check if there is enough data
         if price_per_stock is None and buy_date is None:
             raise ValueError(f"You are missing the date or price.")
 
-        #check if ticker is valid
+        # Check if ticker is valid
         if not calculate_func.is_valid_ticker(ticker):
             raise ValueError(f"This ticker {ticker} is invalid.")
 
@@ -70,37 +112,56 @@ class Account:
                 "date": []
             }
 
-        #update the ticker buy dict
+        # Update the ticker buy dict
         calculate_func.super_update(self.tickers_buy_dict, ticker, amount, price_per_stock, buy_date)
-        #update the account dict
+        # Update the account dict
         self.account_dict = calculate_func.update_account_dict(True, ticker, self.account_dict, self.tickers_sell_dict,
                                                                self.tickers_buy_dict)
 
+
     def sell_stock(self, ticker: str, amount: int, price_per_stock: float = None, sell_date: str = None) -> None:
         """
-        Add to the tickers_sale_dict this info: [amount(int), price(float), date(str, YYYY-MM-DD)].
-        :param ticker: str
-        :param amount: int
-        :param price_per_stock: float / None
-        :param sell_date: str (optional)
-        :return: None
+        Records the sale of a stock by adding the provided details to the `tickers_sell_dict`.
+
+        This method validates that the stock (ticker) exists in the user's account (`tickers_buy_dict`). 
+        If the ticker is not already present in `tickers_sell_dict`, it initializes an entry for it.
+
+        Args:
+            ticker (str): The stock ticker symbol.
+            amount (int): The number of shares sold.
+            price_per_stock (float, optional): The price at which each stock was sold. Defaults to None.
+            sell_date (str, optional): The date of the sale in the format 'YYYY-MM-DD'. Defaults to None.
+
+        Raises:
+            ValueError: If the stock ticker is not found in the user's account.
+            ValueError: If both `price_per_stock` and `sell_date` are not provided.
+
+        Updates:
+            - `tickers_sell_dict`: Adds the sale details including the number of shares sold, 
+            the price per stock, and the sale date.
+
+        Example:
+            >>> self.sell_stock('AAPL', 10, 150.0, '2024-12-01')
+            This adds the sale information for the 'AAPL' ticker to `tickers_sell_dict`.
         """
-        # Ensure the ticker exists in the dictionary
-        if ticker not in self.tickers_buy_dict:
-            raise ValueError(f"you don't have this ticker in your account: {ticker}")
+    
+    # Ensure the ticker exists in the dictionary
+    if ticker not in self.tickers_buy_dict:
+        raise ValueError(f"You don't have this ticker in your account: {ticker}")
 
-        if ticker not in self.tickers_sell_dict:
-            self.tickers_sell_dict[ticker] = {
-                "num": [],
-                "amount": [],
-                "price": [],
-                "date": []
-            }
+    if ticker not in self.tickers_sell_dict:
+        self.tickers_sell_dict[ticker] = {
+            "num": [],
+            "amount": [],
+            "price": [],
+            "date": []
+        }
 
-        if price_per_stock is None and sell_date is None:
-            raise ValueError(f"You are missing the date or price.")
+    if price_per_stock is None and sell_date is None:
+        raise ValueError("You are missing the date or price.")
 
-        calculate_func.super_update(self.tickers_sell_dict, ticker, amount, price_per_stock, sell_date)
+    calculate_func.super_update(self.tickers_sell_dict, ticker, amount, price_per_stock, sell_date)
+
 
     def show_buy_info(self):
         calculate_func.show_order_info(self.tickers_buy_dict)
