@@ -188,18 +188,17 @@ def main():
     calculate_func.setup_pd()
     ofer = Account("guy", "1234")
     ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-10")
-    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-10")
-    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-10")
-
-    ofer.buy_stock("nvda", 1, price_per_stock=100, date="2024-12-10")
-    ofer.buy_stock("nvda", 1, price_per_stock=100, date="2024-12-10")
-    ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-12-10")
-
-    ofer.show_buy_info()
-    ofer.show_sell_info()
+    ofer.buy_stock("voo", 1, price_per_stock=200, date="2024-12-10")
+    ofer.sell_stock("voo", 1, price_per_stock=200, date="2024-12-10")
 
 
-    #ofer.show_account_info()
+    
+    #ofer.show_buy_info()
+    
+    #ofer.show_sell_info()
+
+
+    ofer.show_account_info()
 
 
 if __name__ == '__main__':
