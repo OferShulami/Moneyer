@@ -504,9 +504,9 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
     if sell_dict is None and buy_dict is None:
         raise ValueError("You are missing dict")
 
+    current_price = get_current_price(ticker)
     # check if it's a buy order
     if order:
-        current_price = get_current_price(ticker)
         # If account_dict doesn't have the ticker
         if ticker not in account_dict:
             # Update account dict by creating new ticker
@@ -529,14 +529,13 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
             # Update the account_dict with the ticker
             new_amount = buy_dict[ticker]["amount"][-1]
             new_price = buy_dict[ticker]["price"][-1]
-            total_amount = old_amount + new_amount
+            total_amount = old_amount - new_amount
 
             # Update values in account_dict
             account_dict[ticker]["amount"] = total_amount
-            account_dict[ticker]["initial price"] = ((old_initial_price * old_amount) + (
-                    new_price * new_amount)) / total_amount
-            account_dict[ticker]["current price"] = current_price
             account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
+            account_dict[ticker]["initial price"] = account_dict[ticker]["stock value in portfolio"] / total_amount
+            account_dict[ticker]["current price"] = current_price
             account_dict[ticker]["price change"] = (current_price * total_amount) - (
                     account_dict[ticker]["initial price"] * total_amount)
             account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
