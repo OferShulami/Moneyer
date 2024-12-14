@@ -542,6 +542,20 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
             account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
                                                          account_dict[ticker]["initial price"]) * 100
 
+    else:
+
+        #stop here
+        account_dict[ticker]["amount"] = total_amount
+        account_dict[ticker]["initial price"] = ((old_initial_price * old_amount) + (new_price * new_amount)) / total_amount
+        account_dict[ticker]["current price"] = current_price
+        account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
+        account_dict[ticker]["price change"] = (current_price * total_amount) - (
+        account_dict[ticker]["initial price"] * total_amount)
+        account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
+                                                         account_dict[ticker]["initial price"]) * 100
+        
+
+
     update_percentage_portfolio(account_dict)
     return account_dict
 
