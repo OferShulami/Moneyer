@@ -504,48 +504,55 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
     if sell_dict is None and buy_dict is None:
         raise ValueError("You are missing dict")
 
+
+
+
     current_price = get_current_price(ticker)
+    # Update the account_dict with the ticker
+    new_amount = buy_dict[ticker]["amount"][-1]
+    new_price = buy_dict[ticker]["price"][-1]
+
+
     # check if it's a buy order
     if order:
         # If account_dict doesn't have the ticker
         if ticker not in account_dict:
             # Update account dict by creating new ticker
             account_dict[ticker] = {}
-            account_dict[ticker]["amount"] = buy_dict[ticker]["amount"][-1]
-            account_dict[ticker]["initial price"] = buy_dict[ticker]["price"][-1]
+            account_dict[ticker]["amount"] = new_amount
+            account_dict[ticker]["initial price"] = new_price
             account_dict[ticker]["current price"] = current_price
-            account_dict[ticker]["stock value in portfolio"] = account_dict[ticker]["amount"] * current_price
-            account_dict[ticker]["price change"] = (current_price * account_dict[ticker]["amount"]) - (
-                    account_dict[ticker]["initial price"] * account_dict[ticker]["amount"])
-            account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
-                                                         account_dict[ticker]["initial price"]) * 100
+            account_dict[ticker]["stock value in portfolio"] = new_amount * current_price
+            account_dict[ticker]["price change"] = (current_price * new_amount) - (
+                    new_price * new_amount)
+            account_dict[ticker]["percentage change"] = ((current_price - new_price) /
+                                                         new_price) * 100
 
         # If account_dict has this ticker
         else:
-            # Save all the old info
+
+
             old_amount = account_dict[ticker]["amount"]
             old_initial_price = account_dict[ticker]["initial price"]
 
-            # Update the account_dict with the ticker
-            new_amount = buy_dict[ticker]["amount"][-1]
-            new_price = buy_dict[ticker]["price"][-1]
-            total_amount = old_amount - new_amount
+            total_amount = old_amount + new_amount
 
             # Update values in account_dict
             account_dict[ticker]["amount"] = total_amount
-            account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
-            account_dict[ticker]["initial price"] = account_dict[ticker]["stock value in portfolio"] / total_amount
+            account_dict[ticker]["initial price"] = ((old_initial_price * old_amount) + (new_price * new_amount)) / total_amount
             account_dict[ticker]["current price"] = current_price
+            account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
             account_dict[ticker]["price change"] = (current_price * total_amount) - (
                     account_dict[ticker]["initial price"] * total_amount)
             account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
                                                          account_dict[ticker]["initial price"]) * 100
-
+    # check if it's a sell order
     else:
+            
+        old_amount = account_dict[ticker]["amount"]
+        total_amount = old_amount - new_amount
 
-        #stop here
         account_dict[ticker]["amount"] = total_amount
-        account_dict[ticker]["initial price"] = ((old_initial_price * old_amount) + (new_price * new_amount)) / total_amount
         account_dict[ticker]["current price"] = current_price
         account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
         account_dict[ticker]["price change"] = (current_price * total_amount) - (
@@ -556,6 +563,7 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
 
 
     update_percentage_portfolio(account_dict)
+
     return account_dict
 
 
