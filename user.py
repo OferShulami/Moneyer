@@ -184,7 +184,7 @@ def main():
     #ofer.show_buy_info()
 
 
-    ofer.show_account_info()
+    #ofer.show_account_info()
 
 
 if __name__ == '__main__':
