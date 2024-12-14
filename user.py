@@ -76,7 +76,7 @@ class Account:
         """
         return f"Account(name={self.name}, __type__={self.__type__})"
 
-    def buy_stock(self, ticker: str, amount: int, price_per_stock: float = None, buy_date: str = None) -> None:
+    def buy_stock(self, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
         """
         Adds purchase details to the account for a specific stock.
 
@@ -86,23 +86,23 @@ class Account:
             ticker (str): The stock ticker symbol (e.g., "AAPL").
             amount (int): The number of stocks purchased.
             price_per_stock (float, optional): The purchase price per stock. Must not be None.
-            buy_date (str, optional): The date of purchase in the format 'YYYY-MM-DD'. Must not be None.
+            date (str, optional): The date of purchase in the format 'YYYY-MM-DD'. Must not be None.
 
         Raises:
-            ValueError: If either price_per_stock or buy_date is missing, or if the ticker or date is invalid.
+            ValueError: If either price_per_stock or date is missing, or if the ticker or date is invalid.
         """
         ticker = ticker.upper()
 
         # Check if there is enough data
-        if price_per_stock is None and buy_date is None:
+        if price_per_stock is None and date is None:
             raise ValueError(f"You are missing the date or price.")
 
         # Check if ticker is valid
         if not calculate_func.is_valid_ticker(ticker):
             raise ValueError(f"This ticker {ticker} is invalid.")
 
-        if not calculate_func.check_date(buy_date):
-            raise ValueError(f"This buy date {buy_date} is invalid.")
+        if not calculate_func.check_date(date):
+            raise ValueError(f"This buy date {date} is invalid.")
 
         if ticker not in self.tickers_buy_dict:
             self.tickers_buy_dict[ticker] = {
@@ -113,13 +113,13 @@ class Account:
             }
 
         # Update the ticker buy dict
-        calculate_func.super_update(self.tickers_buy_dict, ticker, amount, price_per_stock, buy_date)
+        calculate_func.super_update(self.tickers_buy_dict, ticker, amount, price_per_stock, date)
         # Update the account dict
         self.account_dict = calculate_func.update_account_dict(True, ticker, self.account_dict, self.tickers_sell_dict,
                                                                self.tickers_buy_dict)
 
 
-    def sell_stock(self, ticker: str, amount: int, price_per_stock: float = None, sell_date: str = None) -> None:
+    def sell_stock(self, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
         """
         Records the sale of a stock by adding the provided details to the `tickers_sell_dict`.
 
@@ -130,11 +130,11 @@ class Account:
             ticker (str): The stock ticker symbol.
             amount (int): The number of shares sold.
             price_per_stock (float, optional): The price at which each stock was sold. Defaults to None.
-            sell_date (str, optional): The date of the sale in the format 'YYYY-MM-DD'. Defaults to None.
+            date (str, optional): The date of the sale in the format 'YYYY-MM-DD'. Defaults to None.
 
         Raises:
             ValueError: If the stock ticker is not found in the user's account.
-            ValueError: If both `price_per_stock` and `sell_date` are not provided.
+            ValueError: If both `price_per_stock` and `date` are not provided.
 
         Updates:
             - `tickers_sell_dict`: Adds the sale details including the number of shares sold, 
@@ -144,6 +144,9 @@ class Account:
             self.sell_stock('AAPL', 10, 150.0, '2024-12-01')
             This adds the sale information for the 'AAPL' ticker to `tickers_sell_dict`.
         """
+
+        ticker = ticker.upper()
+
     
         if ticker not in self.tickers_buy_dict:
             raise ValueError(f"You don't have this ticker in your account: {ticker}")
@@ -155,18 +158,23 @@ class Account:
                 "price": [],
                 "date": []
             }
-
-        if price_per_stock is None and sell_date is None:
+        else:
+            if amount > self.account_dict[ticker]["amount"]:
+                raise ValueError(f"You want to sell {amount} stocks but you have only {self.account_dict[ticker]['amount']} stocks")
+            
+        if price_per_stock is None and date is None:
             raise ValueError("You are missing the date or price.")
+        
+    
 
-        calculate_func.super_update(self.tickers_sell_dict, ticker, amount, price_per_stock, sell_date)
+        calculate_func.super_update(self.tickers_sell_dict, ticker, amount, price_per_stock, date)
 
 
     def show_buy_info(self):
-        calculate_func.show_order_info(self.tickers_buy_dict)
+        calculate_func.show_order_info(self.tickers_buy_dict, order="buy")
 
     def show_sell_info(self):
-        calculate_func.show_order_info(self.tickers_sell_dict)
+        calculate_func.show_order_info(self.tickers_sell_dict, order="sell")
 
     def show_account_info(self):
         calculate_func.create_account_sum(self.account_dict)
@@ -177,14 +185,16 @@ def main():
     
     calculate_func.setup_pd()
     ofer = Account("guy", "1234")
-    ofer.buy_stock("nvda", 1, buy_date="2024-12-10")
-    ofer.buy_stock("nvda", 3, buy_date="2023-12-13")
-    ofer.buy_stock("nvda", 10, buy_date="2024-11-13")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-10")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-10")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-10")
 
-    ofer.buy_stock("aapl", 1, buy_date="2024-12-10")
-    ofer.buy_stock("voo", 1, buy_date="2024-12-10")
+    ofer.buy_stock("nvda", 1, price_per_stock=100, date="2024-12-10")
+    ofer.buy_stock("nvda", 1, price_per_stock=100, date="2024-12-10")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-12-10")
 
     ofer.show_buy_info()
+    ofer.show_sell_info()
 
 
     #ofer.show_account_info()
