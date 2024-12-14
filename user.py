@@ -168,7 +168,9 @@ class Account:
     
 
         calculate_func.super_update(self.tickers_sell_dict, ticker, amount, price_per_stock, date)
-
+        # Update the account dict
+        self.account_dict = calculate_func.update_account_dict(False, ticker, self.account_dict, self.tickers_sell_dict,
+                                                               self.tickers_buy_dict)
 
     def show_buy_info(self):
         calculate_func.show_order_info(self.tickers_buy_dict, order="buy")
