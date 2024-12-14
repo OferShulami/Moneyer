@@ -178,10 +178,13 @@ def main():
     calculate_func.setup_pd()
     ofer = Account("guy", "1234")
     ofer.buy_stock("nvda", 1, buy_date="2024-12-10")
+    ofer.buy_stock("nvda", 3, buy_date="2023-12-13")
+    ofer.buy_stock("nvda", 10, buy_date="2024-11-13")
+
     ofer.buy_stock("aapl", 1, buy_date="2024-12-10")
     ofer.buy_stock("voo", 1, buy_date="2024-12-10")
 
-    #ofer.show_buy_info()
+    ofer.show_buy_info()
 
 
     #ofer.show_account_info()

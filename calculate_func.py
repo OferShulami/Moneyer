@@ -339,20 +339,28 @@ def refresh_current_price_in_account_dict(account_dict: dict) -> None:
     return None
 
 
-def make_order_table(data: dict) -> None:
+def make_order_table(data: dict) -> str:
     """
-    creates a formatted table from a dictionary containing order data.
-    :param data: A dictionary where keys represent order IDs or tickers, and values are dictionaries
-                 containing details such as amount, price, and date.
-    :return: None
+    Creates a formatted table from a dictionary containing order data.
+
+    :param data: A dictionary where keys represent column headers, and values are lists of data.
+    :return: A string representation of the formatted table.
     """
-    # create a DataFrame
-    table = pd.DataFrame.from_dict(data, orient='index')
+    # Create a DataFrame
+    table = pd.DataFrame.from_dict(data, orient="index").T  # Transpose to make rows into columns
 
-    # Use tabulate to print the table with lines
-    table_with_lines_center = tabulate(table, headers='keys', tablefmt='grid', numalign='center', stralign='center')
+    # Use tabulate to create the formatted table without index
+    table_with_lines_center = tabulate(
+        table,
+        headers="keys",  # Use column names as headers
+        tablefmt="grid",
+        numalign="center",
+        stralign="center",
+        showindex=False,  # Disable the index column
+    )
 
-    print(table_with_lines_center)
+    # Return the table as a string
+    return table_with_lines_center
 
 
 def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
@@ -400,11 +408,16 @@ def show_order_info(tickers_dict: dict) -> None:
                          of transactions for that ticker.
     :return: None
     """
+    for ticker in tickers_dict:
+        print(f"{ticker}:")
+        data = {
+            "num": tickers_dict[ticker]["num"],
+            "amount": tickers_dict[ticker]["amount"],
+            "price": tickers_dict[ticker]["price"],
+            "date": tickers_dict[ticker]["date"],
+        }
 
-    for key in tickers_dict:
-        print(f"{key}:")
-        data = {"amount": tickers_dict[key]["amount"], "price": tickers_dict[key]["price"],
-                "date": tickers_dict[key]["date"]}
+        # Call make_order_table and print the result
         print(make_order_table(data), "\n")
 
 
