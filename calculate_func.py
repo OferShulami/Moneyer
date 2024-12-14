@@ -250,7 +250,7 @@ def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
         return next_num
 
 
-def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, buy_date: str,
+def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, buy_sell_date: str,
                        tickers_dict: dict) -> None:
     """
     Update the dictionary with stock data.
@@ -265,7 +265,7 @@ def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, b
     tickers_dict[ticker]["num"].append(num)
     tickers_dict[ticker]["amount"].append(amount)
     tickers_dict[ticker]["price"].append(stock_price)
-    tickers_dict[ticker]["date"].append(buy_date)
+    tickers_dict[ticker]["date"].append(buy_sell_date)
 
     return None
 
@@ -396,7 +396,7 @@ def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: 
         update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
 
 
-def show_order_info(tickers_dict: dict) -> None:
+def show_order_info(tickers_dict: dict, order: str) -> None:
     """
     Displays detailed order information for each stock ticker in the provided dictionary.
 
@@ -408,6 +408,14 @@ def show_order_info(tickers_dict: dict) -> None:
                          of transactions for that ticker.
     :return: None
     """
+    if order == "buy":
+        print("your buying info:\n")
+    elif order == "sell":
+        print("your selling info:\n")
+    
+    else:
+        raise ValueError("go back to user.show_info")
+    
     for ticker in tickers_dict:
         print(f"{ticker}:")
         data = {
