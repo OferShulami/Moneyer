@@ -313,7 +313,7 @@ def make_account_table(data: dict) -> None:
     # Use tabulate to print the table with lines
     table_with_lines_center = tabulate(table, headers='keys', tablefmt='grid', numalign='center', stralign='center')
 
-    print(table_with_lines_center)
+    print(f"account info:\n{table_with_lines_center}")
 
 
 def refresh_current_price_in_account_dict(account_dict: dict) -> None:
@@ -552,14 +552,24 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
         old_amount = account_dict[ticker]["amount"]
         total_amount = old_amount - new_amount
 
-        account_dict[ticker]["amount"] = total_amount
-        account_dict[ticker]["current price"] = current_price
-        account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
-        account_dict[ticker]["price change"] = (current_price * total_amount) - (
-        account_dict[ticker]["initial price"] * total_amount)
-        account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
-                                                         account_dict[ticker]["initial price"]) * 100
+        if total_amount == 0:
+            del account_dict[ticker]
         
+        elif total_amount < 0:
+            raise ValueError("cant sold more stocks")
+        
+        elif total_amount > 0:
+
+            account_dict[ticker]["amount"] = total_amount
+            account_dict[ticker]["current price"] = current_price
+            account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
+            account_dict[ticker]["price change"] = (current_price * total_amount) - (
+            account_dict[ticker]["initial price"] * total_amount)
+            account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
+                                                         account_dict[ticker]["initial price"]) * 100
+
+        else: 
+            raise ValueError("error")        
 
 
     update_percentage_portfolio(account_dict)
