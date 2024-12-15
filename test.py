@@ -1,31 +1,81 @@
+import calculate_func
+import yfinance as yf
 from datetime import datetime, timedelta
+import pandas as pd
+import numpy as np
+from tabulate import tabulate
+import pandas_market_calendars as mcal
 
-def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
+
+# Sample dictionary
+
+buy_dict = {
+    "AAPL": {
+        "num": [1, 2, 3],
+        "price": [150, 155, 160],
+        "date": ["2024-12-01", "2023-11-15", "2024-01-10"]
+    },
+    "GOOG": {
+        "num": [1, 2],
+        "price": [2800, 2850],
+        "date": ["2024-06-15", "2023-07-01"]
+    }
+}
+
+
+
+def make_order_table(data: dict) -> str:
     """
-    calculates the next date given a date string and returns it in the same format.
+    Creates a formatted table from a dictionary containing order data.
 
-    parameters:
-    date_string (str): The starting date as a string.
-    date_format (str): The format of the input date string (default: 'YYYY-MM-DD').
-
-    Returns:
-    str: The next date as a string in the same format.
-
-    Raises:
-    ValueError: If the input date is invalid or doesn't match the expected format.
-
-    Example:
-    calculate_next_date("2023-12-31")
-    '2024-01-01'
+    :param data: A dictionary where keys represent column headers, and values are lists of data.
+    :return: A string representation of the formatted table.
     """
-    try:
-        # parse the input date
-        given_date = datetime.strptime(date_string, date_format)
-        # Add one day
-        next_date = given_date + timedelta(days=1)
-        # Return the next date in the same format
-        return next_date.strftime(date_format)
-    except ValueError as e:
-        raise ValueError(f"Invalid date or format: {e}")
+    # Create a DataFrame
+    table = pd.DataFrame.from_dict(data, orient="index").T  # Transpose to make rows into columns
 
-calculate_next_date("2020-10-12")
+    # Use tabulate to create the formatted table without index
+    table_with_lines_center = tabulate(
+        table,
+        headers="keys",  # Use column names as headers
+        tablefmt="grid",
+        numalign="center",
+        stralign="center",
+        showindex=False,  # Disable the index column
+    )
+
+    # Return the table as a string
+    return table_with_lines_center
+
+
+
+# Sorting the dictionary by date
+def sort_buy_dict_by_date_with_reset_num(buy_dict):
+    sorted_dict = {}
+    for ticker, data in buy_dict.items():
+        # Combine the related lists (num, price, date) into tuples
+        combined = list(zip(data["num"], data["price"], data["date"]))
+
+        # Sort the tuples by the date (converted to datetime objects)
+        sorted_combined = sorted(combined, key=lambda x: datetime.strptime(x[2], "%Y-%m-%d"))
+
+        # Unpack the sorted tuples back into separate lists
+        _, sorted_price, sorted_date = zip(*sorted_combined)
+
+        # Reset "num" to a sequential list starting from 1
+        sorted_num = list(range(1, len(sorted_price) + 1))
+
+        # Update the dictionary with the sorted and reset values
+        sorted_dict[ticker] = {
+            "num": sorted_num,
+            "price": list(sorted_price),
+            "date": list(sorted_date)
+        }
+
+    return sorted_dict
+
+# Sort the dictionary
+sorted_buy_dict = sort_buy_dict_by_date_with_reset_num(buy_dict)
+
+# Print the sorted dictionary
+print(make_order_table(sorted_buy_dict))

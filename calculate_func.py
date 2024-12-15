@@ -62,16 +62,21 @@ def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
         raise ValueError(f"Invalid date or format: {e}")
 
 
-def check_date(start_date: str) -> bool:
+def check_date(start_date: str) -> str:
     """
 
     :param start_date:
     :return:
     """
-    if fix_date_format(start_date) == "Error":
+
+    fix_start_date = fix_date_format(start_date)
+    if fix_start_date == "Error":
         raise ValueError(f"Invalid date format: {start_date}")
-    if check_start_date(start_date):
-        return True
+    
+    if check_start_date(fix_start_date):
+        return fix_start_date
+    else:
+        raise ValueError("check_date")
 
 
 def check_start_date(start_date: str) -> bool:
@@ -82,7 +87,7 @@ def check_start_date(start_date: str) -> bool:
     start_date (str): The start date in YYYY-MM-DD format.
 
     Returns:
-    str: The valid start date.
+    bool: The valid start date.
 
     Raises:
     ValueError: If the date is invalid or before NASDAQ's founding.
@@ -98,10 +103,12 @@ def check_start_date(start_date: str) -> bool:
     if parsed_date < nasdaq_start_date:
         raise ValueError(f"The NASDAQ stock market did not exist before {nasdaq_start_date.strftime('%Y-%m-%d')}.")
 
+
     if start_date in get_nasdaq_open_days(start_date, start_date):
         return True
 
     else:
+        print(get_nasdaq_open_days(start_date, start_date))
         raise ValueError(f"The NASDAQ stock market was close on {start_date}.")
 
 
@@ -232,6 +239,44 @@ def now_date() -> str:
     today_date = datetime.now().strftime("%Y-%m-%d")
 
     return today_date
+
+
+def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
+
+    ticker = ticker.upper
+    profit_dict = {}
+
+    #convert to datetime varible
+    date_x = datetime.strptime(date_x, "%Y-%m-%d")
+    date_y = datetime.strptime(date_y, "%Y-%m-%d")
+
+    for _ in range(len(tickers_buy_dict[ticker])):
+        # Filter buy and sell transactions within the date range
+        buy_dates = [datetime.strptime(d, "%Y-%m-%d") for d in tickers_buy_dict[ticker]["date"]]
+
+    # for ticker in tickers_buy_dict.items():
+    #     # Filter buy and sell transactions within the date range
+    #     buy_dates = [datetime.strptime(d, "%Y-%m-%d") for d in tickers_buy_dict[ticker]["date"]]
+    #     # Filter buy transactions within range X to Y
+    #     filtered_buys = [
+    #         (amount, price) for amount, price, d in zip(data["buy"]["amount"], data["buy"]["price"], buy_dates)
+    #         if date_x <= d <= date_y
+    #     ]
+    #     # Filter sell transactions within range X to Y
+    #     filtered_sells = [
+    #         (amount, price) for amount, price, d in zip(data["sell"]["amount"], data["sell"]["price"], sell_dates)
+    #         if date_x <= d <= date_y
+    #     ]
+
+    if start_date == "first buy time":
+        pass
+    if end_date == "now":
+        pass
+    if ticker == "all":
+        pass
+    
+    
+    print(buy_dates)
 
 
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
