@@ -181,6 +181,9 @@ class Account:
     def show_account_info(self):
         calculate_func.create_account_sum(self.account_dict)
         calculate_func.make_account_table(self.account_dict)
+    
+    def show_profit(self,ticker: str = "all", start_date: str = "start time", end_date: str = "now"):
+        ###
 
 
 def main():
