@@ -243,16 +243,19 @@ def now_date() -> str:
 
 def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
 
-    ticker = ticker.upper
+    ticker = ticker.upper()
     profit_dict = {}
 
     #convert to datetime varible
-    date_x = datetime.strptime(date_x, "%Y-%m-%d")
-    date_y = datetime.strptime(date_y, "%Y-%m-%d")
+    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
-    for _ in range(len(tickers_buy_dict[ticker])):
-        # Filter buy and sell transactions within the date range
+
+    print(tickers_buy_dict[ticker])
+    for _ in range(len(tickers_buy_dict[ticker]["date"])):
         buy_dates = [datetime.strptime(d, "%Y-%m-%d") for d in tickers_buy_dict[ticker]["date"]]
+    
+    print(buy_dates)
 
     # for ticker in tickers_buy_dict.items():
     #     # Filter buy and sell transactions within the date range
@@ -276,7 +279,6 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
         pass
     
     
-    print(buy_dates)
 
 
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:

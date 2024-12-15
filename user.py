@@ -195,10 +195,10 @@ def main():
 
 
     
-    ofer.show_buy_info()
+    #ofer.show_buy_info()
     # ofer.show_sell_info()
     # ofer.show_account_info()
-    ofer.show_profit("voo", "2000-1-1,2024-12-10")
+    ofer.show_profit("voo", "2000-1-1", "2024-12-10")
 
 
 if __name__ == '__main__':
