@@ -76,7 +76,7 @@ class Account:
         """
         return f"Account(name={self.name}, __type__={self.__type__})"
 
-    def buy_stock(self, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
+    def buy_stock(self, ticker: str, amount: int, price_per_stock: float = None, date: str = "Error") -> None:
         """
         Adds purchase details to the account for a specific stock.
 
@@ -101,8 +101,8 @@ class Account:
         if not calculate_func.is_valid_ticker(ticker):
             raise ValueError(f"This ticker {ticker} is invalid.")
 
-        if not calculate_func.check_date(date):
-            raise ValueError(f"This buy date {date} is invalid.")
+        date = calculate_func.check_date(date)
+
 
         if ticker not in self.tickers_buy_dict:
             self.tickers_buy_dict[ticker] = {
@@ -181,27 +181,37 @@ class Account:
     def show_account_info(self):
         calculate_func.create_account_sum(self.account_dict)
         calculate_func.make_account_table(self.account_dict)
+    
+    def show_profit(self,ticker: str = "all", start_date: str = "first buy time", end_date: str = "now"):
+        calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict)
+
 
 
 def main():
     
     calculate_func.setup_pd()
     ofer = Account("guy", "1234")
-    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-10")
-    ofer.buy_stock("voo", 1, price_per_stock=200, date="2024-12-10")
-    ofer.sell_stock("voo", 1, price_per_stock=200, date="2024-12-10")
-    ofer.buy_stock("nvda", 1, price_per_stock=200, date="2024-12-10")
-    ofer.sell_stock("nvda", 1, price_per_stock=300, date="2024-12-10")
-    ofer.buy_stock("aapl", 1, price_per_stock=500, date="2024-12-10")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-04")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-09-4")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2012-4-04")
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2014-11-11")
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2021-10-11")
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2014-11-12")
+
+
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2000-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2000-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2000-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2008-9-1")
 
 
     
-    ofer.show_buy_info()
-    
-    ofer.show_sell_info()
-
-
-    ofer.show_account_info()
+    #ofer.show_buy_info()
+    # ofer.show_sell_info()
+    # ofer.show_account_info()
+    ofer.show_profit("voo", "2024-1-1", "2024-12-10")
 
 
 if __name__ == '__main__':

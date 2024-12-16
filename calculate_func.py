@@ -62,16 +62,21 @@ def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
         raise ValueError(f"Invalid date or format: {e}")
 
 
-def check_date(start_date: str) -> bool:
+def check_date(start_date: str) -> str:
     """
 
     :param start_date:
     :return:
     """
-    if fix_date_format(start_date) == "Error":
+
+    fix_start_date = fix_date_format(start_date)
+    if fix_start_date == "Error":
         raise ValueError(f"Invalid date format: {start_date}")
-    if check_start_date(start_date):
-        return True
+    
+    if check_start_date(fix_start_date):
+        return fix_start_date
+    else:
+        raise ValueError("check_date")
 
 
 def check_start_date(start_date: str) -> bool:
@@ -82,7 +87,7 @@ def check_start_date(start_date: str) -> bool:
     start_date (str): The start date in YYYY-MM-DD format.
 
     Returns:
-    str: The valid start date.
+    bool: The valid start date.
 
     Raises:
     ValueError: If the date is invalid or before NASDAQ's founding.
@@ -98,10 +103,12 @@ def check_start_date(start_date: str) -> bool:
     if parsed_date < nasdaq_start_date:
         raise ValueError(f"The NASDAQ stock market did not exist before {nasdaq_start_date.strftime('%Y-%m-%d')}.")
 
+
     if start_date in get_nasdaq_open_days(start_date, start_date):
         return True
 
     else:
+        print(get_nasdaq_open_days(start_date, start_date))
         raise ValueError(f"The NASDAQ stock market was close on {start_date}.")
 
 
@@ -232,6 +239,51 @@ def now_date() -> str:
     today_date = datetime.now().strftime("%Y-%m-%d")
 
     return today_date
+
+
+def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
+    ticker = ticker.upper()
+    profit_dict = {}
+
+    # Convert to datetime variables
+    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+    # Convert buy dates to datetime objects
+    buy_dates: list[datetime] = []
+    for i in range(len(tickers_buy_dict[ticker]["date"])):
+        buy_dates.append(datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d"))
+    
+    # Convert sell dates to datetime objects
+    sell_dates: list[datetime] = []
+    for i in range(len(tickers_sell_dict[ticker]["date"])):
+        sell_dates.append(datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d"))
+
+    # Filter relevant buy dates within the range and convert to strings
+    relevant_buy_dates: list[str] = []
+    for day in buy_dates:
+        if start_date < day < end_date:
+            relevant_buy_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
+
+    # Filter relevant sell dates within the range and convert to strings
+    relevant_sell_dates: list[str] = []
+    for day in sell_dates:
+        if start_date < day < end_date:
+            relevant_sell_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
+    
+    print(f"relevant_buy_dates: {relevant_buy_dates}\nrelevant_sell_dates: {relevant_sell_dates}")
+
+            
+
+
+    if start_date == "first buy time":
+        pass
+    if end_date == "now":
+        pass
+    if ticker == "all":
+        pass
+    
+    
 
 
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
@@ -508,13 +560,15 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
 
 
     current_price = get_current_price(ticker)
-    # Update the account_dict with the ticker
-    new_amount = buy_dict[ticker]["amount"][-1]
-    new_price = buy_dict[ticker]["price"][-1]
+
 
 
     # check if it's a buy order
     if order:
+
+        new_amount = buy_dict[ticker]["amount"][-1]
+        new_price = buy_dict[ticker]["price"][-1]
+        
         # If account_dict doesn't have the ticker
         if ticker not in account_dict:
             # Update account dict by creating new ticker
@@ -549,6 +603,8 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
     # check if it's a sell order
     else:
             
+        new_amount = sell_dict[ticker]["amount"][-1]
+        new_price = sell_dict[ticker]["price"][-1]
         old_amount = account_dict[ticker]["amount"]
         total_amount = old_amount - new_amount
 
