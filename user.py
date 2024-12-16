@@ -192,13 +192,26 @@ def main():
     calculate_func.setup_pd()
     ofer = Account("guy", "1234")
     ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-12-04")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2024-09-4")
+    ofer.buy_stock("voo", 1, price_per_stock=100, date="2012-4-04")
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2014-11-11")
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2021-10-11")
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2014-11-12")
+
+
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2000-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2000-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2000-9-11")
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2008-9-1")
 
 
     
     #ofer.show_buy_info()
     # ofer.show_sell_info()
     # ofer.show_account_info()
-    ofer.show_profit("voo", "2000-1-1", "2024-12-10")
+    ofer.show_profit("voo", "2024-1-1", "2024-12-10")
 
 
 if __name__ == '__main__':

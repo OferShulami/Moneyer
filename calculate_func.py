@@ -242,34 +242,39 @@ def now_date() -> str:
 
 
 def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
-
     ticker = ticker.upper()
     profit_dict = {}
 
-    #convert to datetime varible
+    # Convert to datetime variables
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
-
-    print(tickers_buy_dict[ticker])
-    for _ in range(len(tickers_buy_dict[ticker]["date"])):
-        buy_dates = [datetime.strptime(d, "%Y-%m-%d") for d in tickers_buy_dict[ticker]["date"]]
+    # Convert buy dates to datetime objects
+    buy_dates: list[datetime] = []
+    for i in range(len(tickers_buy_dict[ticker]["date"])):
+        buy_dates.append(datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d"))
     
-    print(buy_dates)
+    # Convert sell dates to datetime objects
+    sell_dates: list[datetime] = []
+    for i in range(len(tickers_sell_dict[ticker]["date"])):
+        sell_dates.append(datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d"))
 
-    # for ticker in tickers_buy_dict.items():
-    #     # Filter buy and sell transactions within the date range
-    #     buy_dates = [datetime.strptime(d, "%Y-%m-%d") for d in tickers_buy_dict[ticker]["date"]]
-    #     # Filter buy transactions within range X to Y
-    #     filtered_buys = [
-    #         (amount, price) for amount, price, d in zip(data["buy"]["amount"], data["buy"]["price"], buy_dates)
-    #         if date_x <= d <= date_y
-    #     ]
-    #     # Filter sell transactions within range X to Y
-    #     filtered_sells = [
-    #         (amount, price) for amount, price, d in zip(data["sell"]["amount"], data["sell"]["price"], sell_dates)
-    #         if date_x <= d <= date_y
-    #     ]
+    # Filter relevant buy dates within the range and convert to strings
+    relevant_buy_dates: list[str] = []
+    for day in buy_dates:
+        if start_date < day < end_date:
+            relevant_buy_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
+
+    # Filter relevant sell dates within the range and convert to strings
+    relevant_sell_dates: list[str] = []
+    for day in sell_dates:
+        if start_date < day < end_date:
+            relevant_sell_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
+    
+    print(f"relevant_buy_dates: {relevant_buy_dates}\nrelevant_sell_dates: {relevant_sell_dates}")
+
+            
+
 
     if start_date == "first buy time":
         pass
@@ -555,13 +560,15 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
 
 
     current_price = get_current_price(ticker)
-    # Update the account_dict with the ticker
-    new_amount = buy_dict[ticker]["amount"][-1]
-    new_price = buy_dict[ticker]["price"][-1]
+
 
 
     # check if it's a buy order
     if order:
+
+        new_amount = buy_dict[ticker]["amount"][-1]
+        new_price = buy_dict[ticker]["price"][-1]
+        
         # If account_dict doesn't have the ticker
         if ticker not in account_dict:
             # Update account dict by creating new ticker
@@ -596,6 +603,8 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
     # check if it's a sell order
     else:
             
+        new_amount = sell_dict[ticker]["amount"][-1]
+        new_price = sell_dict[ticker]["price"][-1]
         old_amount = account_dict[ticker]["amount"]
         total_amount = old_amount - new_amount
 
