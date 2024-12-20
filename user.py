@@ -210,7 +210,7 @@ def main():
     
     #ofer.show_buy_info()
     # ofer.show_sell_info()
-    # ofer.show_account_info()
+    #ofer.show_account_info()
     ofer.show_profit("voo", "2024-1-1", "2024-12-10")
 
 

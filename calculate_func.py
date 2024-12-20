@@ -245,6 +245,8 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     ticker = ticker.upper()
     profit_dict = {}
 
+    create_start_account_dict()
+
     # Convert to datetime variables
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -284,6 +286,14 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
         pass
     
     
+
+def create_start_account_dict(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict) -> dict:
+    start_account_dict = {}
+
+    for 
+
+    
+
 
 
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
@@ -386,7 +396,11 @@ def refresh_current_price_in_account_dict(account_dict: dict) -> None:
     for ticker in account_dict:
         if ticker == 'total':
             continue
-        account_dict[ticker]["current price"] = get_current_price(ticker)
+        else:
+            account_dict[ticker]["current price"] = get_current_price(ticker)
+        
+            
+
 
     return None
 
