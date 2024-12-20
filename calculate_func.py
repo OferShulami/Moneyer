@@ -245,35 +245,37 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     ticker = ticker.upper()
     profit_dict = {}
 
-    create_start_account_dict()
-
     # Convert to datetime variables
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
-    # Convert buy dates to datetime objects
-    buy_dates: list[datetime] = []
-    for i in range(len(tickers_buy_dict[ticker]["date"])):
-        buy_dates.append(datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d"))
-    
-    # Convert sell dates to datetime objects
-    sell_dates: list[datetime] = []
-    for i in range(len(tickers_sell_dict[ticker]["date"])):
-        sell_dates.append(datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d"))
+    create_start_account_dict(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict, account_dict)
 
-    # Filter relevant buy dates within the range and convert to strings
-    relevant_buy_dates: list[str] = []
-    for day in buy_dates:
-        if start_date < day < end_date:
-            relevant_buy_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
 
-    # Filter relevant sell dates within the range and convert to strings
-    relevant_sell_dates: list[str] = []
-    for day in sell_dates:
-        if start_date < day < end_date:
-            relevant_sell_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
+
+    # # Convert buy dates to datetime objects
+    # buy_dates: list[datetime] = []
+    # for i in range(len(tickers_buy_dict[ticker]["date"])):
+    #     buy_dates.append(datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d"))
     
-    print(f"relevant_buy_dates: {relevant_buy_dates}\nrelevant_sell_dates: {relevant_sell_dates}")
+    # # Convert sell dates to datetime objects
+    # sell_dates: list[datetime] = []
+    # for i in range(len(tickers_sell_dict[ticker]["date"])):
+    #     sell_dates.append(datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d"))
+
+    # # Filter relevant buy dates within the range and convert to strings
+    # relevant_buy_dates: list[str] = []
+    # for day in buy_dates:
+    #     if start_date < day < end_date:
+    #         relevant_buy_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
+
+    # # Filter relevant sell dates within the range and convert to strings
+    # relevant_sell_dates: list[str] = []
+    # for day in sell_dates:
+    #     if start_date < day < end_date:
+    #         relevant_sell_dates.append(day.strftime("%Y-%m-%d"))  # Convert datetime to string
+    
+    # print(f"relevant_buy_dates: {relevant_buy_dates}\nrelevant_sell_dates: {relevant_sell_dates}")
 
             
 
@@ -287,10 +289,43 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     
     
 
-def create_start_account_dict(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict) -> dict:
+def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict, ticker_sell_dict: dict) -> dict:
+
+    relevent_buy_info = []
+    relevent_sell_info = []
+
+    for i in range(len(tickers_buy_dict[ticker]["date"])):
+        the_date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
+        
+        # Filter dates that are >= start_date
+        if the_date <= start_date:
+            relevent_buy_info.append((tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], tickers_buy_dict[ticker]["price"][i]))
+            
+
+    print(relevent_buy_info)
+
+
+# def create_relevent_sell_dict(ticker: str, start_date: datetime, tickers_sell_dict: dict) -> dict:
+
+#     relevent_sell_dict = {ticker: {"num": [], "amount": [], "price": [], "date": []}}
+#     for i in range(len(tickers_sell_dict[ticker]["date"])):
+#         the_date = datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d")
+        
+#         # Filter dates that are >= start_date
+#         if the_date <= start_date:
+#             relevent_sell_dict[ticker]["num"].append(tickers_sell_dict[ticker]["num"][i])
+#             relevent_sell_dict[ticker]["amount"].append(tickers_sell_dict[ticker]["amount"][i])
+#             relevent_sell_dict[ticker]["price"].append(tickers_sell_dict[ticker]["price"][i])
+#             relevent_sell_dict[ticker]["date"].append(tickers_sell_dict[ticker]["date"][i])
+
+#     return relevent_sell_dict
+
+def create_start_account_dict(ticker: str, start_date: datetime, end_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> dict:
     start_account_dict = {}
 
-    for 
+    relevent_buy_dict = create_relevent_buy_dict(ticker,start_date, tickers_buy_dict, tickers_buy_dict)
+
+
 
     
 
