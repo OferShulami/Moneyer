@@ -130,7 +130,6 @@ def check_start_date(start_date: str) -> bool:
         return True
 
     else:
-        print(get_nasdaq_open_days(start_date, start_date))
         raise ValueError(f"The NASDAQ stock market was close on {start_date}.")
 
 
@@ -264,7 +263,9 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
-    start_account_dict = create_start_account_dict(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict, account_dict)
+    start_account_dict = create_start_account_dict(ticker, start_date, tickers_buy_dict, tickers_sell_dict)
+
+    timeline = create_timeline(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict)
 
 
     if start_date == "first buy time":
@@ -275,6 +276,22 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
         pass
     
     
+def create_timeline(ticker: str, start_date: datetime, end_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> list:
+
+    timeline = []
+
+    for i in range(len(tickers_buy_dict[ticker]["amount"])):
+        if datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d") >= start_date and datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d") <= end_date:
+            timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], datetime.strptime(tickers_buy_dict[ticker]["date"][i])))
+
+
+    for i in range(len(tickers_sell_dict[ticker]["amount"])):
+        if datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d") >= start_date and datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d") <= end_date:
+            timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], datetime.strptime(tickers_sell_dict[ticker]["date"][i])))
+
+
+    
+
 
 def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict,) -> list:
 
@@ -306,7 +323,7 @@ def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dic
     return relevent_sell_info
 
 
-def create_start_account_dict(ticker: str, start_date: datetime, end_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> dict:
+def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> dict:
     start_account_dict = {
         ticker: {
 
@@ -324,15 +341,18 @@ def create_start_account_dict(ticker: str, start_date: datetime, end_date: datet
     for amount in relevent_sell_dict:
         start_account_dict[ticker]["amount"] -= amount
 
+
     while True:
 
         try:
-            start_account_dict[ticker]["current price"] = bring_price(find_prices(ticker, start_date.strftime("%Y-%m-%d")))
+            start_account_dict[ticker]["current price"] = bring_price(find_prices(ticker, start_date.strftime("%Y-%m-%d")), 'close')
             break
         except Exception:
             start_date = start_date - timedelta(days=1) 
 
-    print(start_account_dict)
+    start_account_dict[ticker]["stock value in Portfolio"] =  start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+
+    return start_account_dict
 
 
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:

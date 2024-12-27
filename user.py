@@ -187,9 +187,7 @@ class Account:
     def show_profit(self,ticker: str = "all", start_date: str = "first buy time", end_date: str = "now"):
 
         start_date, end_date = calculate_func.sub_date(start_date, end_date)
-
-
-
+        
         calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict)
 
 
@@ -198,13 +196,16 @@ def main():
     
     calculate_func.setup_pd()
     ofer = Account("guy", "1234")
-    ofer.buy_stock("voo", 1, price_per_stock=100, date="2012-4-04")
-    ofer.buy_stock("voo", 10, price_per_stock=100, date="2014-11-11")
-    ofer.buy_stock("voo", 10, price_per_stock=100, date="2024-8-12")
 
-    ofer.sell_stock("voo", 1, price_per_stock=100, date="2000-9-11")
-    ofer.sell_stock("voo", 1, price_per_stock=100, date="2023-9-11")
-    ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-8-12")
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2022-8-12")
+    ofer.buy_stock("voo", 2, price_per_stock=100, date="2022-4-12")
+
+    ofer.buy_stock("voo", 10, price_per_stock=100, date="2024-8-12")
+    ofer.buy_stock("voo", 2, price_per_stock=100, date="2024-4-12")
+
+
+    ofer.sell_stock("voo", 1, price_per_stock=100, date="2002-8-12")
+    ofer.sell_stock("voo", 4, price_per_stock=100, date="2002-8-13")
 
 
     ofer.show_profit("voo", "2024-1-1", "2024-12-10")
