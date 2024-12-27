@@ -5,4 +5,8 @@ import numpy as np
 from tabulate import tabulate
 import pandas_market_calendars as mcal
 
-print(type(datetime.strptime("2024-10-13", "%Y-%m-%d")))
+
+
+time = datetime(2022,11,1)
+time = time - 1
+print(time)
