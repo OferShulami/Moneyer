@@ -267,6 +267,9 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
 
     timeline = create_timeline(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict)
 
+    sorted_timeline = sorted(timeline, key=lambda x: x[4])
+
+    print(sorted_timeline)
 
     if start_date == "first buy time":
         pass
@@ -281,16 +284,19 @@ def create_timeline(ticker: str, start_date: datetime, end_date: datetime, ticke
     timeline = []
 
     for i in range(len(tickers_buy_dict[ticker]["amount"])):
-        if datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d") >= start_date and datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d") <= end_date:
-            timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], datetime.strptime(tickers_buy_dict[ticker]["date"][i])))
 
+        date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
+        if date >= start_date and date <= end_date:
+            timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], date))
 
     for i in range(len(tickers_sell_dict[ticker]["amount"])):
-        if datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d") >= start_date and datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d") <= end_date:
-            timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], datetime.strptime(tickers_sell_dict[ticker]["date"][i])))
+
+        date = datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d")
+        if date >= start_date and date <= end_date:
+            timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], date))
 
 
-    
+    return timeline
 
 
 def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict,) -> list:
