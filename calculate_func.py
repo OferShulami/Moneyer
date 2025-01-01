@@ -61,17 +61,44 @@ def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
     except ValueError as e:
         raise ValueError(f"Invalid date or format: {e}")
 
+def sub_date(start_date, end_date) -> tuple:
+    while True:
 
-def check_date(start_date: str) -> bool:
+        try:
+            start_date = start_date.strftime("%Y-%m-%d")
+            start_date = check_date(start_date)
+            break            
+        except Exception:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            start_date = start_date - timedelta(days=1) 
+
+    while True:
+
+        try:
+            end_date = check_date(end_date)
+            break            
+        except Exception:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+            end_date = end_date - timedelta(days=1) 
+
+    return (start_date, end_date)
+
+
+def check_date(start_date: str) -> str:
     """
 
     :param start_date:
     :return:
     """
-    if fix_date_format(start_date) == "Error":
+
+    fix_start_date = fix_date_format(start_date)
+    if fix_start_date == "Error":
         raise ValueError(f"Invalid date format: {start_date}")
-    if check_start_date(start_date):
-        return True
+    
+    if check_start_date(fix_start_date):
+        return fix_start_date
+    else:
+        raise ValueError("check_date")
 
 
 def check_start_date(start_date: str) -> bool:
@@ -82,7 +109,7 @@ def check_start_date(start_date: str) -> bool:
     start_date (str): The start date in YYYY-MM-DD format.
 
     Returns:
-    str: The valid start date.
+    bool: The valid start date.
 
     Raises:
     ValueError: If the date is invalid or before NASDAQ's founding.
@@ -97,6 +124,7 @@ def check_start_date(start_date: str) -> bool:
 
     if parsed_date < nasdaq_start_date:
         raise ValueError(f"The NASDAQ stock market did not exist before {nasdaq_start_date.strftime('%Y-%m-%d')}.")
+
 
     if start_date in get_nasdaq_open_days(start_date, start_date):
         return True
@@ -163,37 +191,31 @@ def get_nasdaq_open_days(start_date, end_date):
 
 def find_prices(the_ticker: str, start_date: str) -> list:
     """
-    Fetch the closing price of a given stock on a specific date.
-
-    parameters:
-    the_ticker (str): The stock ticker symbol (e.g., 'VOO').
-    start_date (str): The start date in the format 'YYYY-MM-DD'.
-    end_date (str): The end date in the format 'YYYY-MM-DD'.
-
-    Returns:
-    float: The closing price of the stock, or None if no data is available.
+    Fetch the stock's open, high, low, close prices, and volume for a specific date.
+    Returns a list of prices or None if no data is available.
     """
-
     end_date = find_end_time(start_date)
 
     try:
         # Fetch stock data
         stock = yf.Ticker(the_ticker)
         data = stock.history(start=start_date, end=end_date, interval='1d')
+        
         if data.empty:
             raise Exception(f"No trading data for {the_ticker} on {start_date}.")
-        else:
-            # Extract specific columns
-            open_price = data['Open'].iloc[0]
-            high_price = data['High'].iloc[0]
-            low_price = data['Low'].iloc[0]
-            close_price = data['Close'].iloc[0]
-            volume = data['Volume'].iloc[0]
+            
+        # Extract specific columns
+        open_price = data['Open'].iloc[0]
+        high_price = data['High'].iloc[0]
+        low_price = data['Low'].iloc[0]
+        close_price = data['Close'].iloc[0]
+        volume = data['Volume'].iloc[0]
 
-            return [open_price, high_price, low_price, close_price, volume]
+        return [open_price, high_price, low_price, close_price, volume]
 
     except Exception as e:
         print(f"Error: {e}")
+        
 
 
 def is_valid_ticker(ticker: str) -> bool:
@@ -232,6 +254,111 @@ def now_date() -> str:
     today_date = datetime.now().strftime("%Y-%m-%d")
 
     return today_date
+
+
+def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
+    ticker = ticker.upper()
+
+    # Convert to datetime variables
+    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+    start_account_dict = create_start_account_dict(ticker, start_date, tickers_buy_dict, tickers_sell_dict)
+
+    timeline = create_timeline(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict)
+
+    sorted_timeline = sorted(timeline, key=lambda x: x[4])
+
+    print(sorted_timeline)
+
+    if start_date == "first buy time":
+        pass
+    if end_date == "now":
+        pass
+    if ticker == "all":
+        pass
+    
+    
+def create_timeline(ticker: str, start_date: datetime, end_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> list:
+
+    timeline = []
+
+    for i in range(len(tickers_buy_dict[ticker]["amount"])):
+
+        date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
+        if date >= start_date and date <= end_date:
+            timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], date))
+
+    for i in range(len(tickers_sell_dict[ticker]["amount"])):
+
+        date = datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d")
+        if date >= start_date and date <= end_date:
+            timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], date))
+
+
+    return timeline
+
+
+def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict,) -> list:
+
+    relevent_buy_info = []
+
+    for i in range(len(tickers_buy_dict[ticker]["date"])):
+        the_date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
+        
+        # Filter dates that are >= start_date
+        if the_date <= start_date:
+            relevent_buy_info.append(tickers_buy_dict[ticker]["amount"][i])
+            
+
+    return relevent_buy_info
+
+
+def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dict: dict) -> list:
+
+    relevent_sell_info = []
+
+    for i in range(len(ticker_sell_dict[ticker]["date"])):
+        the_date = datetime.strptime(ticker_sell_dict[ticker]["date"][i], "%Y-%m-%d")
+        
+        # Filter dates that are >= start_date
+        if the_date <= start_date:
+            relevent_sell_info.append(ticker_sell_dict[ticker]["amount"][i])
+            
+
+    return relevent_sell_info
+
+
+def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> dict:
+    start_account_dict = {
+        ticker: {
+
+            "amount": 0,
+            "current price": 0
+        }
+    }
+
+    relevent_buy_dict = create_relevent_buy_dict(ticker,start_date, tickers_buy_dict)
+    relevent_sell_dict = create_relevent_sell_dict(ticker,start_date, tickers_sell_dict)
+
+    for amount in relevent_buy_dict:
+        start_account_dict[ticker]["amount"] += amount
+    
+    for amount in relevent_sell_dict:
+        start_account_dict[ticker]["amount"] -= amount
+
+
+    while True:
+
+        try:
+            start_account_dict[ticker]["current price"] = bring_price(find_prices(ticker, start_date.strftime("%Y-%m-%d")), 'close')
+            break
+        except Exception:
+            start_date = start_date - timedelta(days=1) 
+
+    start_account_dict[ticker]["stock value in Portfolio"] =  start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+
+    return start_account_dict
 
 
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
@@ -334,7 +461,11 @@ def refresh_current_price_in_account_dict(account_dict: dict) -> None:
     for ticker in account_dict:
         if ticker == 'total':
             continue
-        account_dict[ticker]["current price"] = get_current_price(ticker)
+        else:
+            account_dict[ticker]["current price"] = get_current_price(ticker)
+        
+            
+
 
     return None
 
@@ -508,13 +639,15 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
 
 
     current_price = get_current_price(ticker)
-    # Update the account_dict with the ticker
-    new_amount = buy_dict[ticker]["amount"][-1]
-    new_price = buy_dict[ticker]["price"][-1]
+
 
 
     # check if it's a buy order
     if order:
+
+        new_amount = buy_dict[ticker]["amount"][-1]
+        new_price = buy_dict[ticker]["price"][-1]
+        
         # If account_dict doesn't have the ticker
         if ticker not in account_dict:
             # Update account dict by creating new ticker
@@ -549,6 +682,8 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
     # check if it's a sell order
     else:
             
+        new_amount = sell_dict[ticker]["amount"][-1]
+        new_price = sell_dict[ticker]["price"][-1]
         old_amount = account_dict[ticker]["amount"]
         total_amount = old_amount - new_amount
 
