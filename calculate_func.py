@@ -12,7 +12,6 @@ def setup_pd() -> None:
     pd.set_option('display.max_columns', None)  # Show all columns
     return None
 
-
 def find_end_time(start_date: str) -> str:
     """
     Find the next date based on a given start date after validation.
@@ -31,7 +30,6 @@ def find_end_time(start_date: str) -> str:
         return end_time
     except ValueError as e:
         raise ValueError(f"Error in finding end time: {e}")
-
 
 def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
     """
@@ -83,7 +81,6 @@ def sub_date(start_date, end_date) -> tuple:
 
     return (start_date, end_date)
 
-
 def check_date(start_date: str) -> str:
     """
 
@@ -99,7 +96,6 @@ def check_date(start_date: str) -> str:
         return fix_start_date
     else:
         raise ValueError("check_date")
-
 
 def check_start_date(start_date: str) -> bool:
     """
@@ -131,7 +127,6 @@ def check_start_date(start_date: str) -> bool:
 
     else:
         raise ValueError(f"The NASDAQ stock market was close on {start_date}.")
-
 
 def fix_date_format(date_string: str) -> str:
     """
@@ -168,7 +163,6 @@ def fix_date_format(date_string: str) -> str:
     # If none of the formats match, return an error message or None
     return "Error"
 
-
 def get_nasdaq_open_days(start_date, end_date):
     """
     Get the days the NASDAQ is open between two dates.
@@ -187,7 +181,6 @@ def get_nasdaq_open_days(start_date, end_date):
     open_days = schedule.index.strftime('%Y-%m-%d').tolist()
 
     return open_days
-
 
 def find_prices(the_ticker: str, start_date: str) -> list:
     """
@@ -216,8 +209,6 @@ def find_prices(the_ticker: str, start_date: str) -> list:
     except Exception as e:
         print(f"Error: {e}")
         
-
-
 def is_valid_ticker(ticker: str) -> bool:
     """
     checks if a ticker symbol is valid by attempting to fetch its data using yfinance.
@@ -242,7 +233,6 @@ def is_valid_ticker(ticker: str) -> bool:
         print(f"Error validating ticker '{ticker}': {e}")
         return False
 
-
 def now_date() -> str:
     """
     Gets the current date in 'YYYY-MM-DD' format.
@@ -254,7 +244,6 @@ def now_date() -> str:
     today_date = datetime.now().strftime("%Y-%m-%d")
 
     return today_date
-
 
 def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
     ticker = ticker.upper()
@@ -277,8 +266,7 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
         pass
     if ticker == "all":
         pass
-    
-    
+        
 def create_timeline(ticker: str, start_date: datetime, end_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> list:
 
     timeline = []
@@ -298,7 +286,6 @@ def create_timeline(ticker: str, start_date: datetime, end_date: datetime, ticke
 
     return timeline
 
-
 def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict,) -> list:
 
     relevent_buy_info = []
@@ -313,7 +300,6 @@ def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict
 
     return relevent_buy_info
 
-
 def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dict: dict) -> list:
 
     relevent_sell_info = []
@@ -327,7 +313,6 @@ def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dic
             
 
     return relevent_sell_info
-
 
 def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> dict:
     start_account_dict = {
@@ -360,7 +345,6 @@ def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dic
 
     return start_account_dict
 
-
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
     """
     Updates the ticker number to a given ticker symbol.
@@ -375,7 +359,6 @@ def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
     else:
         next_num = num[-1] + 1
         return next_num
-
 
 def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, buy_sell_date: str,
                        tickers_dict: dict) -> None:
@@ -396,7 +379,6 @@ def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, b
 
     return None
 
-
 def bring_price(lst: list, order: str) -> float:
     """
     return the price according the given order.
@@ -416,7 +398,6 @@ def bring_price(lst: list, order: str) -> float:
         return lst[4]
 
     raise ValueError(f"Invalid order: {order}")
-
 
 def make_account_table(data: dict) -> None:
     """
@@ -441,7 +422,6 @@ def make_account_table(data: dict) -> None:
     table_with_lines_center = tabulate(table, headers='keys', tablefmt='grid', numalign='center', stralign='center')
 
     print(f"account info:\n{table_with_lines_center}")
-
 
 def refresh_current_price_in_account_dict(account_dict: dict) -> None:
     """
@@ -469,7 +449,6 @@ def refresh_current_price_in_account_dict(account_dict: dict) -> None:
 
     return None
 
-
 def make_order_table(data: dict) -> str:
     """
     Creates a formatted table from a dictionary containing order data.
@@ -492,7 +471,6 @@ def make_order_table(data: dict) -> str:
 
     # Return the table as a string
     return table_with_lines_center
-
 
 def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
     """
@@ -526,7 +504,6 @@ def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: 
             date = now_date()
         update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
 
-
 def show_order_info(tickers_dict: dict, order: str) -> None:
     """
     Displays detailed order information for each stock ticker in the provided dictionary.
@@ -559,7 +536,6 @@ def show_order_info(tickers_dict: dict, order: str) -> None:
         # Call make_order_table and print the result
         print(make_order_table(data), "\n")
 
-
 def get_current_price(ticker_symbol: str) -> float | None:
     """
     Fetches the current price of a stock using the yfinance library.
@@ -586,7 +562,6 @@ def get_current_price(ticker_symbol: str) -> float | None:
         raise ValueError(f"could not retrieve the price for ticker '{ticker_symbol}'.")
     except Exception as e:
         raise ValueError(f"An error occurred: {e}")
-
 
 def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict: dict = None,
                         buy_dict: dict = None) -> dict:
@@ -711,7 +686,6 @@ def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict:
 
     return account_dict
 
-
 def update_percentage_portfolio(account_dict: dict) -> None:
     """
     Updates the percentage of each stock's value relative to the total portfolio value.
@@ -736,7 +710,6 @@ def update_percentage_portfolio(account_dict: dict) -> None:
     for ticker in account_dict:
         account_dict[ticker]["percentage portfolio"] = account_dict[ticker]["stock value in portfolio"] / sum_val * 100
 
-
 def calculate_sum_portfolio(account_dict: dict) -> float:
     """
     calculates the total value of the portfolio by summing the stock values of all tickers.
@@ -756,7 +729,6 @@ def calculate_sum_portfolio(account_dict: dict) -> float:
         portfolio_sum_value += account_dict[ticker]["stock value in portfolio"]
 
     return portfolio_sum_value
-
 
 def create_account_sum(account_dict: dict) -> None:
     """
@@ -797,7 +769,6 @@ def create_account_sum(account_dict: dict) -> None:
 
     return None
 
-
 def calculate_average_current_price(total_value_in_portfolio: float, total_amount_of_stock: int) -> float:
     """
 
@@ -808,7 +779,6 @@ def calculate_average_current_price(total_value_in_portfolio: float, total_amoun
 
     average_current_price = total_value_in_portfolio / total_amount_of_stock
     return average_current_price
-
 
 def calculate_percentage_change(average_initial_price: float, total_amount_of_stock: int,
                                 total_value_in_portfolio: float) -> float:
@@ -831,7 +801,6 @@ def calculate_percentage_change(average_initial_price: float, total_amount_of_st
     percentage_change = (total_value_in_portfolio - (average_initial_price * total_amount_of_stock)) * 100 / (
             average_initial_price * total_amount_of_stock)
     return percentage_change
-
 
 def calculate_total_price_change(account_dict: dict) -> float:
     """
@@ -856,7 +825,6 @@ def calculate_total_price_change(account_dict: dict) -> float:
 
     return total_price_change
 
-
 def calculate_total_value_in_portfolio(account_dict: dict) -> float:
     """
     calculates the total value of all stocks in the portfolio.
@@ -878,7 +846,6 @@ def calculate_total_value_in_portfolio(account_dict: dict) -> float:
     for ticker in account_dict:
         total_value_in_portfolio += account_dict[ticker]["stock value in portfolio"]
     return total_value_in_portfolio
-
 
 def calculate_average_initial_price(account_dict: dict) -> float:
     """
@@ -902,7 +869,6 @@ def calculate_average_initial_price(account_dict: dict) -> float:
     average_initial_price = total_initial_price / calculate_total_amount_of_stock(account_dict)
     return average_initial_price
 
-
 def calculate_total_amount_of_stock(account_dict: dict) -> int:
     """
     calculates the total amount of stock in the portfolio by summing the amount of each stock.
@@ -924,10 +890,8 @@ def calculate_total_amount_of_stock(account_dict: dict) -> int:
 
     return total_amount_of_stock
 
-
 def main():
     print("hell yes")
-
 
 if __name__ == "__main__":
     main()
