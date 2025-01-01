@@ -247,18 +247,25 @@ def now_date() -> str:
 
 def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
     ticker = ticker.upper()
+    profit: float = 0
 
     # Convert to datetime variables
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
     start_account_dict = create_start_account_dict(ticker, start_date, tickers_buy_dict, tickers_sell_dict)
+    print(start_account_dict)
 
     timeline = create_timeline(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict)
 
     sorted_timeline = sorted(timeline, key=lambda x: x[4])
 
-    print(sorted_timeline)
+    for action in sorted_timeline:
+
+        profit += go_over_action(start_account_dict, action, profit)
+
+    print(profit)
+
 
     if start_date == "first buy time":
         pass
@@ -267,9 +274,66 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     if ticker == "all":
         pass
         
+def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> float:
+
+
+
+    if action[0] == "buy":
+
+        old_price = start_account_dict[action[1]]["current price"]
+        new_current_price = action[3]
+        print(f"new price: {new_current_price}")
+
+        start_account_dict[action[1]]["amount"] += action[2]
+        start_account_dict[action[1]]["initial price"] = new_current_price
+        start_account_dict[action[1]]["current price"] = new_current_price
+        start_account_dict[action[1]]["stock value in Portfolio"] = new_current_price * start_account_dict[action[1]]["amount"]
+        start_account_dict[action[1]]["Price Change"] = 0
+        start_account_dict[action[1]]["Percentage Change"] = 0
+        start_account_dict[action[1]]["percentage portfolio"] = 0
+
+
+        profit = (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+
+
+    elif action[0] == "sell":
+
+        old_price = start_account_dict[action[1]]["current price"]
+        new_current_price = action[3]
+        print(f"new price: {new_current_price}")
+
+
+        start_account_dict[action[1]]["amount"] -= action[2]
+        start_account_dict[action[1]]["initial price"] = new_current_price
+        start_account_dict[action[1]]["current price"] = new_current_price
+        start_account_dict[action[1]]["stock value in Portfolio"] = new_current_price * start_account_dict[action[1]]["amount"]
+        start_account_dict[action[1]]["Price Change"] = 0
+        start_account_dict[action[1]]["Percentage Change"] = 0
+        start_account_dict[action[1]]["percentage portfolio"] = 0
+
+
+        profit = (new_current_price - old_price) * action[2] + (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+
+    elif action[0] == "end":
+        
+        old_price = start_account_dict[action[1]]["current price"]
+        new_current_price = bring_price(find_prices(action[1], action[4].strftime("%Y-%m-%d")), 'close')
+
+        print(f"new price: {new_current_price}")
+
+        profit = (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+
+
+    else: 
+        raise Exception("Error in timeline!")
+    
+    
+    return profit    
+
 def create_timeline(ticker: str, start_date: datetime, end_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> list:
 
     timeline = []
+    #[order, ticker, amount, price, date)]
 
     for i in range(len(tickers_buy_dict[ticker]["amount"])):
 
@@ -283,7 +347,8 @@ def create_timeline(ticker: str, start_date: datetime, end_date: datetime, ticke
         if date >= start_date and date <= end_date:
             timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], date))
 
-
+    timeline.append(("end", ticker, 0, 0, end_date))
+                    
     return timeline
 
 def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict,) -> list:
@@ -319,7 +384,12 @@ def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dic
         ticker: {
 
             "amount": 0,
-            "current price": 0
+            "initial price": 0,
+            "current price": 0,
+            "stock value in Portfolio": 0,
+            "Price Change": 0,
+            "Percentage Change": 0, 
+            "percentage portfolio": 0
         }
     }
 
@@ -342,6 +412,7 @@ def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dic
             start_date = start_date - timedelta(days=1) 
 
     start_account_dict[ticker]["stock value in Portfolio"] =  start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+    start_account_dict[ticker]["initial price"] =  start_account_dict[ticker]["current price"] 
 
     return start_account_dict
 
