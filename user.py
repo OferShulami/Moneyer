@@ -205,10 +205,10 @@ def main():
     ofer.sell_stock("voo", 4, date="2023-01-11")
 
     #timeline
-    #ofer.buy_stock("voo", 2, date="2024-4-12")
+    #ofer.buy_stock("voo", 1, date="2024-4-12")
     #ofer.buy_stock("voo", 10, price_per_stock=100, date="2024-8-12")
     
-    #ofer.sell_stock("voo", 1, price_per_stock=100, date="2024-12-12")
+    ofer.sell_stock("voo", 1, date="2024-4-12")
     #ofer.sell_stock("voo", 4, price_per_stock=100, date="2024-12-13")
 
 

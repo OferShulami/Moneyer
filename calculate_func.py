@@ -263,8 +263,8 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     for action in sorted_timeline:
 
         profit += go_over_action(start_account_dict, action, profit)
+        print(f"sum of profits: {profit}")
 
-    print(profit)
 
 
     if start_date == "first buy time":
@@ -280,6 +280,7 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
 
     if action[0] == "buy":
 
+        old_amount = start_account_dict[action[1]]["amount"]
         old_price = start_account_dict[action[1]]["current price"]
         new_current_price = action[3]
         print(f"new price: {new_current_price}")
@@ -293,11 +294,14 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
         start_account_dict[action[1]]["percentage portfolio"] = 0
 
 
-        profit = (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+        profit = (new_current_price - old_price) * old_amount
+        print(f"profit: {profit}")
+        print(f"account dict: {start_account_dict}")
 
 
     elif action[0] == "sell":
 
+        old_amount = start_account_dict[action[1]]["amount"]
         old_price = start_account_dict[action[1]]["current price"]
         new_current_price = action[3]
         print(f"new price: {new_current_price}")
@@ -312,7 +316,11 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
         start_account_dict[action[1]]["percentage portfolio"] = 0
 
 
-        profit = (new_current_price - old_price) * action[2] + (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+        profit = (new_current_price - old_price) * action[2] * 0.75 + (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+        print(f"profit: {profit}")
+        print(f"account dict: {start_account_dict}")
+
+
 
     elif action[0] == "end":
         
@@ -321,7 +329,18 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
 
         print(f"new price: {new_current_price}")
 
+        
+        start_account_dict[action[1]]["initial price"] = new_current_price
+        start_account_dict[action[1]]["current price"] = new_current_price
+        start_account_dict[action[1]]["stock value in Portfolio"] = new_current_price * start_account_dict[action[1]]["amount"]
+        start_account_dict[action[1]]["Price Change"] = 0
+        start_account_dict[action[1]]["Percentage Change"] = 0
+        start_account_dict[action[1]]["percentage portfolio"] = 0
+
+
         profit = (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+        print(f"profit: {profit}")
+        print(f"account dict: {start_account_dict}")
 
 
     else: 
