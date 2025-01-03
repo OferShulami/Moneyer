@@ -65,8 +65,6 @@ class Account:
         self.tickers_sell_dict = {}
         self.account_dict = {}
 
-
-
     def __repr__(self):
         """
         Returns a string representation of the Account object.
@@ -117,7 +115,6 @@ class Account:
         # Update the account dict
         self.account_dict = calculate_func.update_account_dict(True, ticker, self.account_dict, self.tickers_sell_dict,
                                                                self.tickers_buy_dict)
-
 
     def sell_stock(self, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
         """
@@ -185,7 +182,8 @@ class Account:
         calculate_func.make_account_table(self.account_dict)
     
     def show_profit(self,ticker: str = "all", start_date: str = "first buy time", end_date: str = "now"):
-
+        ticker = ticker.upper()
+        
         start_date, end_date = calculate_func.sub_date(start_date, end_date)
         
         calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict)
@@ -198,21 +196,21 @@ def main():
     ofer = Account("guy", "1234")
 
     #start_account_dict
-    ofer.buy_stock("voo", 2, date="2023-01-10")
-    ofer.buy_stock("voo", 10, date="2023-01-11")
-
-    ofer.sell_stock("voo", 1, date="2023-01-11")
-    ofer.sell_stock("voo", 4, date="2023-01-11")
-
-    #timeline
-    #ofer.buy_stock("voo", 1, date="2024-4-12")
-    #ofer.buy_stock("voo", 10, price_per_stock=100, date="2024-8-12")
-    
-    ofer.sell_stock("voo", 1, date="2024-4-12")
-    #ofer.sell_stock("voo", 4, price_per_stock=100, date="2024-12-13")
+    ofer.buy_stock("crsr", 17, price_per_stock=22.6, date="2021-12-01")
+    ofer.buy_stock("ual", 3, price_per_stock=43.109, date="2021-12-01")
+    ofer.buy_stock("abnb", 2, price_per_stock=179.25, date="2021-12-01")
+    ofer.buy_stock("meta", 1, price_per_stock=327.45, date="2021-12-01")
+    ofer.buy_stock("tsla", 3, price_per_stock=388, date="2021-12-01")
+    ofer.buy_stock("msft", 1, price_per_stock=335.2558, date="2021-12-01")
+    ofer.buy_stock("aapl", 2, price_per_stock=167.2572, date="2021-12-01")
+    ofer.buy_stock("voo", 4, price_per_stock=423.95, date="2021-12-01")
 
 
-    ofer.show_profit("voo", "2024-1-1", "2024-12-20")
+
+    for ticker in ofer.account_dict:
+
+        #ofer.show_account_info()
+        ofer.show_profit(ticker, "2021-01-01", "2022-01-01")
 
 
 if __name__ == '__main__':

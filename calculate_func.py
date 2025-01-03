@@ -59,27 +59,27 @@ def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
     except ValueError as e:
         raise ValueError(f"Invalid date or format: {e}")
 
-def sub_date(start_date, end_date) -> tuple:
-    while True:
+def sub_date(start_date: str, end_date: str) -> tuple:
+    
 
-        try:
-            start_date = start_date.strftime("%Y-%m-%d")
-            start_date = check_date(start_date)
-            break            
-        except Exception:
-            start_date = datetime.strptime(start_date, "%Y-%m-%d")
-            start_date = start_date - timedelta(days=1) 
-
-    while True:
-
-        try:
-            end_date = check_date(end_date)
-            break            
-        except Exception:
-            end_date = datetime.strptime(end_date, "%Y-%m-%d")
-            end_date = end_date - timedelta(days=1) 
+    start_date = sub_date_halper(start_date)
+    end_date = sub_date_halper(end_date)
 
     return (start_date, end_date)
+
+def sub_date_halper(date: str) -> str:
+    
+    while True:
+
+        try:
+            date = check_date(date)
+            break            
+        except Exception:
+            date = datetime.strptime(date, "%Y-%m-%d")
+            date = date - timedelta(days=1) 
+            date = date.strftime("%Y-%m-%d")
+
+    return date
 
 def check_date(start_date: str) -> str:
     """
@@ -263,16 +263,8 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     for action in sorted_timeline:
 
         profit += go_over_action(start_account_dict, action, profit)
-        print(f"sum of profits: {profit}")
 
-
-
-    if start_date == "first buy time":
-        pass
-    if end_date == "now":
-        pass
-    if ticker == "all":
-        pass
+    print(f"the profit to {ticker} from {start_date} to {end_date} is: {profit}")
         
 def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> float:
 
@@ -283,7 +275,6 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
         old_amount = start_account_dict[action[1]]["amount"]
         old_price = start_account_dict[action[1]]["current price"]
         new_current_price = action[3]
-        print(f"new price: {new_current_price}")
 
         start_account_dict[action[1]]["amount"] += action[2]
         start_account_dict[action[1]]["initial price"] = new_current_price
@@ -295,8 +286,7 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
 
 
         profit = (new_current_price - old_price) * old_amount
-        print(f"profit: {profit}")
-        print(f"account dict: {start_account_dict}")
+
 
 
     elif action[0] == "sell":
@@ -304,7 +294,6 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
         old_amount = start_account_dict[action[1]]["amount"]
         old_price = start_account_dict[action[1]]["current price"]
         new_current_price = action[3]
-        print(f"new price: {new_current_price}")
 
 
         start_account_dict[action[1]]["amount"] -= action[2]
@@ -317,8 +306,7 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
 
 
         profit = (new_current_price - old_price) * action[2] * 0.75 + (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
-        print(f"profit: {profit}")
-        print(f"account dict: {start_account_dict}")
+
 
 
 
@@ -326,8 +314,6 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
         
         old_price = start_account_dict[action[1]]["current price"]
         new_current_price = bring_price(find_prices(action[1], action[4].strftime("%Y-%m-%d")), 'close')
-
-        print(f"new price: {new_current_price}")
 
         
         start_account_dict[action[1]]["initial price"] = new_current_price
@@ -339,8 +325,7 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
 
 
         profit = (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
-        print(f"profit: {profit}")
-        print(f"account dict: {start_account_dict}")
+
 
 
     else: 
@@ -354,17 +339,25 @@ def create_timeline(ticker: str, start_date: datetime, end_date: datetime, ticke
     timeline = []
     #[order, ticker, amount, price, date)]
 
-    for i in range(len(tickers_buy_dict[ticker]["amount"])):
+    if not tickers_buy_dict: 
+        pass
+    
+    else:
+        for i in range(len(tickers_buy_dict[ticker]["amount"])):
 
-        date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
-        if date >= start_date and date <= end_date:
-            timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], date))
+            date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
+            if date >= start_date and date <= end_date:
+                timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], date))
 
-    for i in range(len(tickers_sell_dict[ticker]["amount"])):
+    if not tickers_sell_dict: 
+        pass
+    
+    else:
+        for i in range(len(tickers_sell_dict[ticker]["amount"])):
 
-        date = datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d")
-        if date >= start_date and date <= end_date:
-            timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], date))
+            date = datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d")
+            if date >= start_date and date <= end_date:
+                timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], date))
 
     timeline.append(("end", ticker, 0, 0, end_date))
                     
@@ -373,6 +366,9 @@ def create_timeline(ticker: str, start_date: datetime, end_date: datetime, ticke
 def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict,) -> list:
 
     relevent_buy_info = []
+
+    if not tickers_buy_dict: 
+        return relevent_buy_info
 
     for i in range(len(tickers_buy_dict[ticker]["date"])):
         the_date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
@@ -388,12 +384,16 @@ def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dic
 
     relevent_sell_info = []
 
-    for i in range(len(ticker_sell_dict[ticker]["date"])):
-        the_date = datetime.strptime(ticker_sell_dict[ticker]["date"][i], "%Y-%m-%d")
+    if not ticker_sell_dict: 
+        return relevent_sell_info
+    
+    else:
+        for i in range(len(ticker_sell_dict[ticker]["date"])):
+            the_date = datetime.strptime(ticker_sell_dict[ticker]["date"][i], "%Y-%m-%d")
         
-        # Filter dates that are >= start_date
-        if the_date <= start_date:
-            relevent_sell_info.append(ticker_sell_dict[ticker]["amount"][i])
+            # Filter dates that are >= start_date
+            if the_date <= start_date:
+                relevent_sell_info.append(ticker_sell_dict[ticker]["amount"][i])
             
 
     return relevent_sell_info
