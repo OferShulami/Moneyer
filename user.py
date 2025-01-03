@@ -42,6 +42,21 @@ class Account:
                         "percentage portfolio" (float): Percentage of the portfolio's total value represented by this stock.
                     }
                 }
+        profit_dict (dict): .
+            Structure:
+                {
+                    ticker (str): {
+                        "initial amount" (int): 
+                        "final amount" (int): 
+                        "initial price" (float):
+                        "final price" (float): 
+                        "initial stock value in Portfolio" (float): 
+                        "final stock value in Portfolio" (float): Current value of the stock in the portfolio.
+                        "Price Change" (float): Difference between current and initial stock value.
+                        "Percentage Change" (float): Percentage change in stock value from initial price.
+                        "percentage portfolio" (float): Percentage of the portfolio's total value represented by this stock.
+                    }
+                }
 
     Methods:
         __init__(name: str, password: str):
@@ -64,6 +79,8 @@ class Account:
         self.tickers_buy_dict = {}
         self.tickers_sell_dict = {}
         self.account_dict = {}
+        self.profit_dict = {}
+
 
     def __repr__(self):
         """
@@ -181,12 +198,16 @@ class Account:
         calculate_func.create_account_sum(self.account_dict)
         calculate_func.make_account_table(self.account_dict)
     
-    def show_profit(self,ticker: str = "all", start_date: str = "first buy time", end_date: str = "now"):
+    def show_profit(self, ticker: str = "all", start_date: str = "first buy time", end_date: str = "now"):
         ticker = ticker.upper()
-        
+
         start_date, end_date = calculate_func.sub_date(start_date, end_date)
-        
-        calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict)
+        if ticker == "ALL":
+            for ticker in self.account_dict:
+                calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
+
+        else:
+            calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
 
 
 

@@ -245,7 +245,7 @@ def now_date() -> str:
 
     return today_date
 
-def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict) -> None:
+def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict, profit_dict) -> None:
     ticker = ticker.upper()
     profit: float = 0
 
@@ -254,7 +254,6 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
     start_account_dict = create_start_account_dict(ticker, start_date, tickers_buy_dict, tickers_sell_dict)
-    print(start_account_dict)
 
     timeline = create_timeline(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict)
 
