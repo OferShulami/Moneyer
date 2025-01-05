@@ -1066,13 +1066,14 @@ def calculate_total_amount_of_stock_profit(profit_dict: dict) -> tuple:
 
 def calculate_total_value_in_portfolio_profit(profit_dict: dict) -> tuple:
 
-
     total_initial_value_in_portfolio: float = 0
     total_final_value_in_portfolio: float = 0
 
     for ticker in profit_dict:
-        total_value_in_portfolio += account_dict[ticker]["stock value in portfolio"]
-    return total_value_in_portfolio
+        total_initial_value_in_portfolio += profit_dict[ticker]["initial stock value in Portfolio"]
+        total_final_value_in_portfolio += profit_dict[ticker]["final stock value in Portfolio"]
+    return (total_initial_value_in_portfolio, total_final_value_in_portfolio) 
+
 def calculate_average_price_of_stock_profit(profit_dict: dict, total_amount_of_initial_stock: int, total_amount_of_final_stock: int) -> tuple:
 
     total_initial_price: float = 0
@@ -1086,26 +1087,44 @@ def calculate_average_price_of_stock_profit(profit_dict: dict, total_amount_of_i
     average_final_price = total_final_price / total_amount_of_final_stock
     return (average_initial_price, average_final_price)
 
+def calculate_profit_sum(profit_dict: dict) -> float:
+
+    total_profit: float = 0
+    for ticker in profit_dict:
+        total_profit += profit_dict[ticker]["profit"]
+
+    return total_profit
+
+def calculate_percentage_change_profit(profit_dict: dict, total_final_value_in_portfolio: float) -> float:
+
+    percentage_change: float = 0
+    for key in profit_dict:
+        profit_dict[key]["percentage portfolio"] = profit_dict[key]["final price"] * 100 / total_final_value_in_portfolio
+        percentage_change += profit_dict[key]["Percentage Change"] * profit_dict[key]["percentage portfolio"] / 100
+    
+    return percentage_change
 
 def create_all_profit_dict(profit_dict: dict) -> None:
     
     (total_amount_of_initial_stock, total_amount_of_final_stock) = calculate_total_amount_of_stock_profit(profit_dict)
     (average_initial_price, average_final_price) = calculate_average_price_of_stock_profit(profit_dict, total_amount_of_initial_stock, total_amount_of_final_stock)
-    total_value_in_portfolio = calculate_total_value_in_portfolio(account_dict)
-    total_price_change = calculate_total_price_change(account_dict)
-    percentage_change = calculate_percentage_change(average_initial_price, total_amount_of_stock,
-                                                    total_value_in_portfolio)
-    average_current_price = calculate_average_current_price(total_value_in_portfolio, total_amount_of_stock)
+    (total_initial_value_in_portfolio, total_final_value_in_portfolio) = calculate_total_value_in_portfolio_profit(profit_dict)
+    total_profit = calculate_profit_sum(profit_dict)
+    percentage_change = calculate_percentage_change_profit(profit_dict, total_final_value_in_portfolio)
+    
+    
 
-    account_dict["total"] = {}
+    profit_dict["total"] = {}
 
-    account_dict["total"]["amount"] = total_amount_of_stock
-    account_dict["total"]["initial price"] = average_initial_price
-    account_dict["total"]['stock value in portfolio'] = total_value_in_portfolio
-    account_dict["total"]['price change'] = total_price_change
-    account_dict['total']['percentage change'] = percentage_change
-    account_dict['total']['percentage portfolio'] = 100
-    account_dict['total']['current price'] = average_current_price
+    profit_dict["total"]["initial amount"] = total_amount_of_initial_stock
+    profit_dict["total"]["final amount"] = total_amount_of_final_stock
+    profit_dict["total"]["initial price"] = average_initial_price
+    profit_dict["total"]["final price"] = average_final_price
+    profit_dict["total"]['initial stock value in Portfolio'] = total_initial_value_in_portfolio
+    profit_dict["total"]['final stock value in Portfolio'] = total_final_value_in_portfolio
+    profit_dict["total"]['price change'] = total_profit
+    profit_dict['total']['percentage change'] = percentage_change
+    profit_dict['total']['percentage portfolio'] = 100
 
     return None
 
