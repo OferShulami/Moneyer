@@ -81,7 +81,6 @@ class Account:
         self.account_dict = {}
         self.profit_dict = {}
 
-
     def __repr__(self):
         """
         Returns a string representation of the Account object.
@@ -202,6 +201,7 @@ class Account:
         ticker = ticker.upper()
 
         start_date, end_date = calculate_func.sub_date(start_date, end_date)
+
         if ticker == "ALL":
             for ticker in self.account_dict:
                 calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
@@ -209,7 +209,8 @@ class Account:
         else:
             calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
 
-
+        calculate_func.create_all_profit_dict(self.profit_dict)
+        calculate_func.make_account_table(self.profit_dict)
 
 def main():
     

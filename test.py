@@ -1,5 +1,15 @@
-a= {}
+a= {
+    "asd": {
+        "sad": 1,
+        "sda": 2
+    }
+}
 
 
-if not a:
-    print("kiss")
+a= {
+    "asd": {
+        "sad": 5,
+    }
+}
+
+print(a)
