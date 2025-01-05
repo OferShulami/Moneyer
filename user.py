@@ -52,9 +52,9 @@ class Account:
                         "final price" (float): 
                         "initial stock value in Portfolio" (float): 
                         "final stock value in Portfolio" (float): Current value of the stock in the portfolio.
-                        "Price Change" (float): Difference between current and initial stock value.
+                        "profit" (float): Difference between current and initial stock value.
                         "Percentage Change" (float): Percentage change in stock value from initial price.
-                        "percentage portfolio" (float): Percentage of the portfolio's total value represented by this stock.
+                        "percentage in portfolio" (float): Percentage of the portfolio's total value represented by this stock.
                     }
                 }
 
@@ -204,12 +204,16 @@ class Account:
 
         if ticker == "ALL":
             for ticker in self.account_dict:
-                calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
+                self.profit_dict = calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
 
         else:
             calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
 
-        calculate_func.create_all_profit_dict(self.profit_dict)
+        for ticker, details in self.profit_dict.items():
+            print(ticker, details)
+        self.profit_dict = calculate_func.create_all_profit_dict(self.profit_dict)
+        
+
         calculate_func.make_account_table(self.profit_dict)
 
 def main():
@@ -229,10 +233,8 @@ def main():
 
 
 
-    for ticker in ofer.account_dict:
-
-        #ofer.show_account_info()
-        ofer.show_profit(ticker, "2021-01-01", "2022-01-01")
+    #ofer.show_account_info()
+    ofer.show_profit(ticker="all", start_date="2021-01-01", end_date="2022-01-01")
 
 
 if __name__ == '__main__':

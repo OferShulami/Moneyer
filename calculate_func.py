@@ -245,8 +245,9 @@ def now_date() -> str:
 
     return today_date
 
-def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict, profit_dict) -> None:
+def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict, profit_dict) -> dict:
     ticker = ticker.upper()
+    start_account_dict = {}
     profit: float = 0
     initial_invest: float = 0
 
@@ -254,11 +255,9 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
-    start_account_dict = create_start_account_dict(ticker, start_date, tickers_buy_dict, tickers_sell_dict, initial_invest)
+    start_account_dict = create_start_account_dict(ticker, start_date, tickers_buy_dict, tickers_sell_dict, initial_invest, start_account_dict)
     
-    print(f"start account dict: {start_account_dict}\n\n")
-
-    profit_dict = update_initial_profit_dict(start_account_dict, profit_dict)
+    profit_dict = update_initial_profit_dict(start_account_dict, profit_dict, ticker)
 
     initial_invest = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
 
@@ -272,16 +271,12 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
         if action[0] == "buy":
             initial_invest += action[2] * action[3]
 
-    profit_dict = update_final_profit_dict(start_account_dict, profit_dict, profit, initial_invest)
+    profit_dict = update_final_profit_dict(start_account_dict, profit_dict, profit, initial_invest, ticker)
 
+    return profit_dict
 
-    print(f"profit dict: {profit_dict}\n\n")
-
-def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit: float, initial_invest: float) -> dict:
+def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit: float, initial_invest: float, ticker: str) -> dict:
     
-    ticker = next(iter(start_account_dict))
-
-
     profit_dict[ticker]["final amount"] = start_account_dict[ticker]["amount"]
     profit_dict[ticker]["final price"] = start_account_dict[ticker]["current price"]
     profit_dict[ticker]["final stock in portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
@@ -290,45 +285,29 @@ def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit
 
     return profit_dict
 
-def update_initial_profit_dict(start_account_dict: dict, profit_dict: dict) -> dict:
+def update_initial_profit_dict(start_account_dict: dict, profit_dict: dict, ticker: str) -> dict:
 
-    ticker = next(iter(start_account_dict))
 
     profit_dict = reset_profit_dict(profit_dict, ticker)
 
-    profit_dict = {
-        ticker: {
-            
-            "initial amount": start_account_dict[ticker]["amount"],
-            "final amount": 0,
-            "initial price": start_account_dict[ticker]["current price"],
-            "final price": 0,
-            "initial stock in portfolio": start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"],
-            "final stock in portfolio": 0,
-            "profit": 0,
-            "percentage change": 0,
-            "percentage in portfolio": 0,
-        }
-    }
-    
+    profit_dict[ticker]["initial amount"] = start_account_dict[ticker]["amount"]
+    profit_dict[ticker]["initial price"] = start_account_dict[ticker]["current price"]
+    profit_dict[ticker]["initial stock in portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
 
     return profit_dict
         
 def reset_profit_dict(profit_dict: dict, ticker: str) -> dict:
+    
+    profit_dict[ticker] = {
 
-    profit_dict = {
-        ticker: {
-            
-            "initial amount": 0,
-            "final amount": 0,
-            "initial price": 0,
-            "final price": 0,
-            "initial stock in portfolio": 0,
-            "final stock in portfolio": 0,
-            "profit": 0,
-            "percentage change": 0,
-            "percentage in portfolio": 0,
-        }
+        "initial amount": 0,
+        "final amount": 0,
+        "initial price": 0,
+        "initial stock in portfolio": 0,
+        "final stock in portfolio": 0,
+        "profit": 0, 
+        "percentage change": 0,
+        "percentage in portfolio": 0,
     }
 
     return profit_dict
@@ -470,19 +449,19 @@ def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dic
 
     return relevent_sell_info
 
-def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict, initial_invest: float) -> dict:
-    start_account_dict = {
-        ticker: {
+def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict, initial_invest: float, start_account_dict: dict) -> dict:
 
-            "amount": 0,
-            "initial price": 0,
-            "current price": 0,
-            "stock value in Portfolio": 0,
-            "Price Change": 0,
-            "Percentage Change": 0, 
-            "percentage portfolio": 0
+    start_account_dict[ticker] = {
+
+        "amount": 0,
+        "initial price": 0,
+        "current price": 0,
+        "stock value in Portfolio": 0,
+        "Price Change": 0,
+        "Percentage Change": 0, 
+        "percentage portfolio": 0
         }
-    }
+    
 
     relevent_buy_dict = create_relevent_buy_dict(ticker,start_date, tickers_buy_dict)
     relevent_sell_dict = create_relevent_sell_dict(ticker,start_date, tickers_sell_dict)
@@ -1057,7 +1036,6 @@ def calculate_total_amount_of_stock_profit(profit_dict: dict) -> tuple:
 
     total_amount_of_initial_stock: int = 0
     total_amount_of_final_stock: int = 0
-
     for ticker in profit_dict:
         total_amount_of_initial_stock += profit_dict[ticker]["initial amount"]
         total_amount_of_final_stock += profit_dict[ticker]["final amount"]
@@ -1068,14 +1046,25 @@ def calculate_total_value_in_portfolio_profit(profit_dict: dict) -> tuple:
 
     total_initial_value_in_portfolio: float = 0
     total_final_value_in_portfolio: float = 0
-
+    print(profit_dict)
     for ticker in profit_dict:
-        total_initial_value_in_portfolio += profit_dict[ticker]["initial stock value in Portfolio"]
-        total_final_value_in_portfolio += profit_dict[ticker]["final stock value in Portfolio"]
+
+        total_initial_value_in_portfolio += profit_dict[ticker]["initial stock in portfolio"]
+        total_final_value_in_portfolio += profit_dict[ticker]["final stock in portfolio"]
     return (total_initial_value_in_portfolio, total_final_value_in_portfolio) 
 
 def calculate_average_price_of_stock_profit(profit_dict: dict, total_amount_of_initial_stock: int, total_amount_of_final_stock: int) -> tuple:
+    """
+    Calculates the average initial and final stock prices based on the profit dictionary.
 
+    Args:
+        profit_dict (dict): Dictionary containing stock profit details for each ticker.
+        total_amount_of_initial_stock (int): Total initial stock amount across all tickers.
+        total_amount_of_final_stock (int): Total final stock amount across all tickers.
+
+    Returns:
+        tuple: Average initial price and average final price as floats.
+    """
     total_initial_price: float = 0
     total_final_price: float = 0
 
@@ -1083,9 +1072,19 @@ def calculate_average_price_of_stock_profit(profit_dict: dict, total_amount_of_i
         total_initial_price += profit_dict[ticker]["initial amount"] * profit_dict[ticker]["initial price"]
         total_final_price += profit_dict[ticker]["final amount"] * profit_dict[ticker]["final price"]
 
-    average_initial_price = total_initial_price / total_amount_of_initial_stock
-    average_final_price = total_final_price / total_amount_of_final_stock
-    return (average_initial_price, average_final_price)
+    # Calculate average initial price
+    if total_amount_of_initial_stock > 0:
+        average_initial_price = total_initial_price / total_amount_of_initial_stock
+    else:
+        average_initial_price = 0  # Default value if no initial stock
+
+    # Calculate average final price
+    if total_amount_of_final_stock > 0:
+        average_final_price = total_final_price / total_amount_of_final_stock
+    else:
+        average_final_price = 0  # Default value if no final stock
+
+    return average_initial_price, average_final_price
 
 def calculate_profit_sum(profit_dict: dict) -> float:
 
@@ -1099,22 +1098,39 @@ def calculate_percentage_change_profit(profit_dict: dict, total_final_value_in_p
 
     percentage_change: float = 0
     for key in profit_dict:
-        profit_dict[key]["percentage portfolio"] = profit_dict[key]["final price"] * 100 / total_final_value_in_portfolio
-        percentage_change += profit_dict[key]["Percentage Change"] * profit_dict[key]["percentage portfolio"] / 100
+        profit_dict[key]["percentage Change"] = profit_dict[key]["final price"] * 100 / total_final_value_in_portfolio
+        percentage_change += profit_dict[key]["percentage Change"] * profit_dict[key]["percentage in portfolio"] / 100
     
     return percentage_change
 
-def create_all_profit_dict(profit_dict: dict) -> None:
-    
+
+def update_percentage_in_portfolio(profit_dict: dict, total_final_value_in_portfolio: float) -> dict:
+    for key in profit_dict:
+        profit_dict[key]["percentage in portfolio"] = profit_dict[key]["final price"] / total_final_value_in_portfolio * 100 
+
+    return profit_dict
+
+def create_all_profit_dict(profit_dict: dict) -> dict:
     (total_amount_of_initial_stock, total_amount_of_final_stock) = calculate_total_amount_of_stock_profit(profit_dict)
     (average_initial_price, average_final_price) = calculate_average_price_of_stock_profit(profit_dict, total_amount_of_initial_stock, total_amount_of_final_stock)
     (total_initial_value_in_portfolio, total_final_value_in_portfolio) = calculate_total_value_in_portfolio_profit(profit_dict)
     total_profit = calculate_profit_sum(profit_dict)
+    profit_dict = update_percentage_in_portfolio(profit_dict, total_final_value_in_portfolio)
     percentage_change = calculate_percentage_change_profit(profit_dict, total_final_value_in_portfolio)
     
     
 
-    profit_dict["total"] = {}
+    profit_dict["total"] = {
+
+        "initial amount": 0,
+        "final amount": 0,
+        "initial price": 0,
+        "initial stock in portfolio": 0,
+        "final stock in portfolio": 0,
+        "profit": 0, 
+        "percentage change": 0,
+        "percentage in portfolio": 0,
+    }
 
     profit_dict["total"]["initial amount"] = total_amount_of_initial_stock
     profit_dict["total"]["final amount"] = total_amount_of_final_stock
@@ -1124,9 +1140,9 @@ def create_all_profit_dict(profit_dict: dict) -> None:
     profit_dict["total"]['final stock value in Portfolio'] = total_final_value_in_portfolio
     profit_dict["total"]['price change'] = total_profit
     profit_dict['total']['percentage change'] = percentage_change
-    profit_dict['total']['percentage portfolio'] = 100
+    profit_dict['total']['percentage in portfolio'] = 100
 
-    return None
+    return profit_dict
 
 def main():
     print("hell yes")
