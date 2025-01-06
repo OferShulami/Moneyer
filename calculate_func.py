@@ -279,9 +279,11 @@ def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit
     
     profit_dict[ticker]["final amount"] = start_account_dict[ticker]["amount"]
     profit_dict[ticker]["final price"] = start_account_dict[ticker]["current price"]
-    profit_dict[ticker]["final stock in portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+    profit_dict[ticker]["final stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
     profit_dict[ticker]["profit"] = profit
     profit_dict[ticker]["percentage change"] = profit / (initial_invest) * 100
+
+
 
     return profit_dict
 
@@ -292,7 +294,7 @@ def update_initial_profit_dict(start_account_dict: dict, profit_dict: dict, tick
 
     profit_dict[ticker]["initial amount"] = start_account_dict[ticker]["amount"]
     profit_dict[ticker]["initial price"] = start_account_dict[ticker]["current price"]
-    profit_dict[ticker]["initial stock in portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+    profit_dict[ticker]["initial stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
 
     return profit_dict
         
@@ -303,8 +305,9 @@ def reset_profit_dict(profit_dict: dict, ticker: str) -> dict:
         "initial amount": 0,
         "final amount": 0,
         "initial price": 0,
-        "initial stock in portfolio": 0,
-        "final stock in portfolio": 0,
+        "final price": 0,
+        "initial stock value in Portfolio": 0,
+        "final stock value in Portfolio": 0,
         "profit": 0, 
         "percentage change": 0,
         "percentage in portfolio": 0,
@@ -1049,8 +1052,8 @@ def calculate_total_value_in_portfolio_profit(profit_dict: dict) -> tuple:
     print(profit_dict)
     for ticker in profit_dict:
 
-        total_initial_value_in_portfolio += profit_dict[ticker]["initial stock in portfolio"]
-        total_final_value_in_portfolio += profit_dict[ticker]["final stock in portfolio"]
+        total_initial_value_in_portfolio += profit_dict[ticker]["initial stock value in Portfolio"]
+        total_final_value_in_portfolio += profit_dict[ticker]["final stock value in Portfolio"]
     return (total_initial_value_in_portfolio, total_final_value_in_portfolio) 
 
 def calculate_average_price_of_stock_profit(profit_dict: dict, total_amount_of_initial_stock: int, total_amount_of_final_stock: int) -> tuple:
@@ -1103,7 +1106,6 @@ def calculate_percentage_change_profit(profit_dict: dict, total_final_value_in_p
     
     return percentage_change
 
-
 def update_percentage_in_portfolio(profit_dict: dict, total_final_value_in_portfolio: float) -> dict:
     for key in profit_dict:
         profit_dict[key]["percentage in portfolio"] = profit_dict[key]["final price"] / total_final_value_in_portfolio * 100 
@@ -1125,8 +1127,9 @@ def create_all_profit_dict(profit_dict: dict) -> dict:
         "initial amount": 0,
         "final amount": 0,
         "initial price": 0,
-        "initial stock in portfolio": 0,
-        "final stock in portfolio": 0,
+        "final price": 0,
+        "initial stock value in Portfolio": 0,
+        "final stock value in Portfolio": 0,
         "profit": 0, 
         "percentage change": 0,
         "percentage in portfolio": 0,
@@ -1138,9 +1141,10 @@ def create_all_profit_dict(profit_dict: dict) -> dict:
     profit_dict["total"]["final price"] = average_final_price
     profit_dict["total"]['initial stock value in Portfolio'] = total_initial_value_in_portfolio
     profit_dict["total"]['final stock value in Portfolio'] = total_final_value_in_portfolio
-    profit_dict["total"]['price change'] = total_profit
-    profit_dict['total']['percentage change'] = percentage_change
+    profit_dict["total"]['profit'] = total_profit
+    profit_dict['total']['Percentage Change'] = percentage_change
     profit_dict['total']['percentage in portfolio'] = 100
+
 
     return profit_dict
 
