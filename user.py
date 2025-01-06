@@ -209,11 +209,10 @@ class Account:
         else:
             calculate_func.profit(ticker, start_date, end_date, self.tickers_buy_dict, self.tickers_sell_dict, self.account_dict, self.profit_dict)
 
-        for ticker, details in self.profit_dict.items():
-            print(ticker, details)
+
         self.profit_dict = calculate_func.create_all_profit_dict(self.profit_dict)
         
-
+        print(self.profit_dict)
         calculate_func.make_account_table(self.profit_dict)
 
 def main():
@@ -222,20 +221,19 @@ def main():
     ofer = Account("guy", "1234")
 
     #start_account_dict
-    ofer.buy_stock("crsr", 17, price_per_stock=22.6, date="2021-12-01")
-    ofer.buy_stock("ual", 3, price_per_stock=43.109, date="2021-12-01")
-    ofer.buy_stock("abnb", 2, price_per_stock=179.25, date="2021-12-01")
-    ofer.buy_stock("meta", 1, price_per_stock=327.45, date="2021-12-01")
-    ofer.buy_stock("tsla", 3, price_per_stock=388, date="2021-12-01")
-    ofer.buy_stock("msft", 1, price_per_stock=335.2558, date="2021-12-01")
-    ofer.buy_stock("aapl", 2, price_per_stock=167.2572, date="2021-12-01")
-    ofer.buy_stock("voo", 4, price_per_stock=423.95, date="2021-12-01")
+    ofer.buy_stock("crsr", 17, date="2021-12-01")
+    # ofer.buy_stock("ual", 3, price_per_stock=43.109, date="2021-12-01")
+    # ofer.buy_stock("abnb", 2, price_per_stock=179.25, date="2021-12-01")
+    # ofer.buy_stock("meta", 1, price_per_stock=327.45, date="2021-12-01")
+    # ofer.buy_stock("tsla", 3, price_per_stock=388, date="2021-12-01")
+    # ofer.buy_stock("msft", 1, price_per_stock=335.2558, date="2021-12-01")
+    # ofer.buy_stock("aapl", 2, price_per_stock=167.2572, date="2021-12-01")
+    # ofer.buy_stock("voo", 4, price_per_stock=423.95, date="2021-12-01")
 
 
 
     #ofer.show_account_info()
     ofer.show_profit(ticker="all", start_date="2021-01-01", end_date="2022-01-01")
-
 
 if __name__ == '__main__':
     main()
