@@ -544,6 +544,16 @@ def bring_price(lst: list, order: str) -> float:
 
     raise ValueError(f"Invalid order: {order}")
 
+
+def round_numeric_values(data: dict) -> dict:
+    for outer_key, inner_dict in data.items():
+        for key, value in inner_dict.items():
+            if isinstance(value, (float, np.float64)):
+                inner_dict[key] = round(value, 3)
+
+    return data
+
+
 def make_account_table(data: dict) -> None:
     """
     creates a formatted table from a nested dictionary containing stock portfolio data.
@@ -553,42 +563,52 @@ def make_account_table(data: dict) -> None:
                  current price, and percentage change.
     :return: None
     """
-    dict_len: int = 0
-    dict_len = len(data["total"])
+    data = round_numeric_values(data)
     
+    for key in data["total"]:
+        if 
+        
 
-    if dict_len == 9:
-        pass
+            
+
+        # Create a DataFrame
+        table = pd.DataFrame.from_dict(data, orient="index")
+        table.index.name = "Stock Ticker"
+        table.reset_index(inplace=True)
+
+        # Rename columns for readability
+        table.columns = [
+            "Ticker", "Init Amt", "Final Amt", "Init Price", 
+            "Final Price", "Init Value", "Final Value", "Profit", 
+            "% Change", "% Portfolio"
+        ]
+
+        # Use tabulate for compact formatting
+        table_with_lines = tabulate(
+            table,
+            headers="keys",
+            tablefmt="fancy_grid",
+            numalign="right",
+            stralign="center",
+        )
+
+        print(f"\profit:\n{table_with_lines}")
     else:
+
         refresh_current_price_in_account_dict(data)
-    # Round numerical values to 3 decimal places
-    for outer_key, inner_dict in data.items():
-        for key, value in inner_dict.items():
-            if isinstance(value, (float, np.float64)):
-                inner_dict[key] = round(value, 2)
+        # Round numerical values to 3 decimal places
+        for outer_key, inner_dict in data.items():
+            for key, value in inner_dict.items():
+                if isinstance(value, (float, np.float64)):
+                    inner_dict[key] = round(value, 3)
 
-    # Create a DataFrame
-    table = pd.DataFrame.from_dict(data, orient="index")
-    table.index.name = "Stock Ticker"
-    table.reset_index(inplace=True)
+        # create a DataFrame
+        table = pd.DataFrame.from_dict(data, orient='index')
 
-    # Rename columns for readability
-    table.columns = [
-        "Ticker", "Init Amt", "Final Amt", "Init Price", 
-        "Final Price", "Init Value", "Final Value", "Profit", 
-        "% Change", "% Portfolio"
-    ]
+        # Use tabulate to print the table with lines
+        table_with_lines_center = tabulate(table, headers='keys', tablefmt='grid', numalign='center', stralign='center')
 
-    # Use tabulate for compact formatting
-    table_with_lines = tabulate(
-        table,
-        headers="keys",
-        tablefmt="fancy_grid",
-        numalign="right",
-        stralign="center",
-    )
-
-    print(f"\nPortfolio Overview:\n{table_with_lines}")
+        print(f"account info:\n{table_with_lines_center}")
 
 def refresh_current_price_in_account_dict(account_dict: dict) -> None:
     """
