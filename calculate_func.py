@@ -270,6 +270,12 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
         profit += go_over_action(start_account_dict, action, profit)
         if action[0] == "buy":
             initial_invest += action[2] * action[3]
+            if profit_dict[action[1]]["initial price"] == 0:
+                profit_dict[action[1]]["initial price"] = action[3]
+            if profit_dict[action[1]]["initial amount"] == 0:
+                profit_dict[action[1]]["initial amount"] = action[2]     
+            if profit_dict[action[1]]["initial stock value in Portfolio"] == 0:
+                 profit_dict[action[1]]["initial stock value in Portfolio"] = profit_dict[action[1]]["initial amount"] * profit_dict[action[1]]["initial price"] 
 
 
     profit_dict = update_final_profit_dict(start_account_dict, profit_dict, profit, initial_invest, ticker)
@@ -283,7 +289,9 @@ def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit
     profit_dict[ticker]["final stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
     profit_dict[ticker]["profit"] = profit
     profit_dict[ticker]["percentage change"] = profit / (initial_invest) * 100
-    print(profit_dict[ticker]["profit"])
+
+    #print(f'pc: {profit_dict[ticker]["percentage change"]}')
+   # print(profit_dict[ticker]["profit"])
 
 
     return profit_dict
@@ -294,7 +302,7 @@ def update_initial_profit_dict(start_account_dict: dict, profit_dict: dict, tick
     profit_dict = reset_profit_dict(profit_dict, ticker)
 
     profit_dict[ticker]["initial amount"] = start_account_dict[ticker]["amount"]
-    profit_dict[ticker]["initial price"] = start_account_dict[ticker]["current price"]
+    profit_dict[ticker]["initial price"] = start_account_dict[ticker]["initial price"]
     profit_dict[ticker]["initial stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
 
     return profit_dict
@@ -486,7 +494,11 @@ def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dic
             start_date = start_date - timedelta(days=1) 
 
     start_account_dict[ticker]["stock value in Portfolio"] =  start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
-    start_account_dict[ticker]["initial price"] =  start_account_dict[ticker]["current price"]
+    if start_account_dict[ticker]["amount"] != 0:
+        start_account_dict[ticker]["initial price"] = start_account_dict[ticker]["current price"]
+    else:
+       start_account_dict[ticker]["initial price"] = 0
+        
 
     return start_account_dict
 
@@ -544,7 +556,6 @@ def bring_price(lst: list, order: str) -> float:
 
     raise ValueError(f"Invalid order: {order}")
 
-
 def round_numeric_values(data: dict) -> dict:
     for outer_key, inner_dict in data.items():
         for key, value in inner_dict.items():
@@ -553,8 +564,8 @@ def round_numeric_values(data: dict) -> dict:
 
     return data
 
-
 def make_account_table(data: dict) -> None:
+
     """
     creates a formatted table from a nested dictionary containing stock portfolio data.
     parameters:
@@ -564,13 +575,30 @@ def make_account_table(data: dict) -> None:
     :return: None
     """
     data = round_numeric_values(data)
-    
+    profit_key_list = ['initial amount', 'final amount', 'initial price', 'final price', 'initial stock value in Portfolio', 'final stock value in Portfolio', 'profit', 'percentage change', 'percentage in portfolio']
+    account_key_list = ['amount', 'initial price', 'stock value in portfolio', 'price change', 'percentage change', 'percentage portfolio', 'current price']
+    data_key_list = []
+
     for key in data["total"]:
-        if 
-        
+        data_key_list.append(key)        
 
-            
+    if data_key_list == account_key_list:
+        refresh_current_price_in_account_dict(data)
+        # Round numerical values to 3 decimal places
+        for outer_key, inner_dict in data.items():
+            for key, value in inner_dict.items():
+                if isinstance(value, (float, np.float64)):
+                    inner_dict[key] = round(value, 3)
 
+        # create a DataFrame
+        table = pd.DataFrame.from_dict(data, orient='index')
+
+        # Use tabulate to print the table with lines
+        table_with_lines_center = tabulate(table, headers='keys', tablefmt='grid', numalign='center', stralign='center')
+
+        print(f"account info:\n{table_with_lines_center}")
+
+    elif data_key_list == profit_key_list:
         # Create a DataFrame
         table = pd.DataFrame.from_dict(data, orient="index")
         table.index.name = "Stock Ticker"
@@ -592,23 +620,11 @@ def make_account_table(data: dict) -> None:
             stralign="center",
         )
 
-        print(f"\profit:\n{table_with_lines}")
+        print(f"profit:\n{table_with_lines}")
+
     else:
 
-        refresh_current_price_in_account_dict(data)
-        # Round numerical values to 3 decimal places
-        for outer_key, inner_dict in data.items():
-            for key, value in inner_dict.items():
-                if isinstance(value, (float, np.float64)):
-                    inner_dict[key] = round(value, 3)
-
-        # create a DataFrame
-        table = pd.DataFrame.from_dict(data, orient='index')
-
-        # Use tabulate to print the table with lines
-        table_with_lines_center = tabulate(table, headers='keys', tablefmt='grid', numalign='center', stralign='center')
-
-        print(f"account info:\n{table_with_lines_center}")
+        raise("error in make account dict")  
 
 def refresh_current_price_in_account_dict(account_dict: dict) -> None:
     """
@@ -631,9 +647,7 @@ def refresh_current_price_in_account_dict(account_dict: dict) -> None:
         else:
             account_dict[ticker]["current price"] = get_current_price(ticker)
         
-            
-
-
+    
     return None
 
 def make_order_table(data: dict) -> str:
@@ -1122,7 +1136,7 @@ def calculate_average_price_of_stock_profit(profit_dict: dict, total_amount_of_i
     if total_amount_of_initial_stock > 0:
         average_initial_price = total_initial_price / total_amount_of_initial_stock
     else:
-        average_initial_price = 0  # Default value if no initial stock
+        average_initial_price = profit_dict[ticker]["initial price"]  # Default value if no initial stock
 
     # Calculate average final price
     if total_amount_of_final_stock > 0:
@@ -1144,18 +1158,19 @@ def calculate_percentage_change_profit(profit_dict: dict, total_final_value_in_p
 
     percentage_change: float = 0
     for key in profit_dict:
-        profit_dict[key]["percentage change"] = profit_dict[key]["final price"] * 100 / total_final_value_in_portfolio
+        #profit_dict[key]["percentage change"] = profit_dict[key]["final price"] * 100 / total_final_value_in_portfolio
         percentage_change += profit_dict[key]["percentage change"] * profit_dict[key]["percentage in portfolio"] / 100
     
     return percentage_change
 
 def update_percentage_in_portfolio(profit_dict: dict, total_final_value_in_portfolio: float) -> dict:
     for key in profit_dict:
-        profit_dict[key]["percentage in portfolio"] = profit_dict[key]["final price"] / total_final_value_in_portfolio * 100 
+        profit_dict[key]["percentage in portfolio"] = profit_dict[key]["final stock value in Portfolio"] / total_final_value_in_portfolio * 100 
 
     return profit_dict
 
 def create_all_profit_dict(profit_dict: dict) -> dict:
+
     (total_amount_of_initial_stock, total_amount_of_final_stock) = calculate_total_amount_of_stock_profit(profit_dict)
     (average_initial_price, average_final_price) = calculate_average_price_of_stock_profit(profit_dict, total_amount_of_initial_stock, total_amount_of_final_stock)
     (total_initial_value_in_portfolio, total_final_value_in_portfolio) = calculate_total_value_in_portfolio_profit(profit_dict)

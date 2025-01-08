@@ -220,20 +220,54 @@ def main():
     calculate_func.setup_pd()
     ofer = Account("guy", "1234")
 
-    #start_account_dict
+    #2021
     ofer.buy_stock("crsr", 17, date="2021-12-01")
-    # ofer.buy_stock("ual", 3, price_per_stock=43.109, date="2021-12-01")
-    # ofer.buy_stock("abnb", 2, price_per_stock=179.25, date="2021-12-01")
-    # ofer.buy_stock("meta", 1, price_per_stock=327.45, date="2021-12-01")
-    # ofer.buy_stock("tsla", 3, price_per_stock=388, date="2021-12-01")
-    # ofer.buy_stock("msft", 1, price_per_stock=335.2558, date="2021-12-01")
-    # ofer.buy_stock("aapl", 2, price_per_stock=167.2572, date="2021-12-01")
-    # ofer.buy_stock("voo", 4, price_per_stock=423.95, date="2021-12-01")
+    ofer.buy_stock("ual", 3, date="2021-12-01")
+    ofer.buy_stock("abnb", 2, date="2021-12-01")
+    ofer.buy_stock("meta", 1, date="2021-12-01")
+    ofer.buy_stock("tsla", 3, date="2021-12-01")
+    ofer.buy_stock("msft", 1, date="2021-12-01")
+    ofer.buy_stock("aapl", 2, date="2021-12-01")
+    ofer.buy_stock("voo", 4, date="2021-12-01")
 
+    #2022
+    ofer.buy_stock("xle", 3, date="2022-02-04")
+    ofer.buy_stock("bito", 12, date="2022-02-04")
+    ofer.buy_stock("xle", 4, date="2022-02-04")
+    ofer.buy_stock("meta", 4, date="2022-02-04")
+    ofer.buy_stock("voo", 2, date="2022-02-04")
+
+    ofer.sell_stock("ual", 3, date="2022-02-24")
+    ofer.sell_stock("aapl", 2, date="2022-02-24")
+    ofer.sell_stock("bito", 12, date="2022-02-24")
+    ofer.sell_stock("voo", 6, date="2022-02-24")
+
+    ofer.buy_stock("voo", 5, date="2022-03-16")
+    ofer.buy_stock("bito", 13, date="2022-03-16")
+    ofer.buy_stock("ual", 4, date="2022-03-16")
+    ofer.buy_stock("aapl", 2, date="2022-03-16")
+
+    ofer.buy_stock("aapl", 4, date="2022-04-18")
+    ofer.buy_stock("bito", 24, date="2022-04-18")
+    ofer.buy_stock("meta", 1, date="2022-04-18")
+    ofer.buy_stock("aapl", 1, date="2022-04-18")
+    ofer.buy_stock("voo", 4, date="2022-04-18")
 
 
     #ofer.show_account_info()
+    print("2021:")
     ofer.show_profit(ticker="all", start_date="2021-01-01", end_date="2022-01-01")
+
+
+
+
+    print("2022:")
+    ofer.show_profit(ticker="all", start_date="2022-01-01", end_date="2023-01-01")
+
+
+
+
+
 
 if __name__ == '__main__':
     main()
