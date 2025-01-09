@@ -290,8 +290,6 @@ def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit
     profit_dict[ticker]["profit"] = profit
     profit_dict[ticker]["percentage change"] = profit / (initial_invest) * 100
 
-    #print(f'pc: {profit_dict[ticker]["percentage change"]}')
-   # print(profit_dict[ticker]["profit"])
 
 
     return profit_dict
@@ -386,7 +384,6 @@ def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> fl
         start_account_dict[action[1]]["percentage change"] = 0
         start_account_dict[action[1]]["percentage portfolio"] = 0
 
-        print(f"new_current_price: {new_current_price}\nold_price: {old_price}\n")
         profit = (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
 
 
@@ -402,7 +399,7 @@ def create_timeline(ticker: str, start_date: datetime, end_date: datetime, ticke
     timeline = []
     #[order, ticker, amount, price, date)]
 
-    if not tickers_buy_dict: 
+    if ticker not in tickers_buy_dict: 
         pass
     
     else:
@@ -412,7 +409,7 @@ def create_timeline(ticker: str, start_date: datetime, end_date: datetime, ticke
             if date >= start_date and date <= end_date:
                 timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], date))
 
-    if not tickers_sell_dict: 
+    if ticker not in tickers_sell_dict: 
         pass
     
     else:
@@ -430,27 +427,29 @@ def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict
 
     relevent_buy_info = []
 
-    if not tickers_buy_dict: 
+    if ticker not in tickers_buy_dict: 
         return relevent_buy_info
+    else:
 
-    for i in range(len(tickers_buy_dict[ticker]["date"])):
-        the_date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
-        
-        # Filter dates that are >= start_date
-        if the_date <= start_date:
-            relevent_buy_info.append(tickers_buy_dict[ticker]["amount"][i])
+        for i in range(len(tickers_buy_dict[ticker]["date"])):
+            the_date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
             
+            # Filter dates that are >= start_date
+            if the_date <= start_date:
+                relevent_buy_info.append(tickers_buy_dict[ticker]["amount"][i])
+                
 
-    return relevent_buy_info
+        return relevent_buy_info
 
 def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dict: dict) -> list:
 
     relevent_sell_info = []
 
-    if not ticker_sell_dict: 
+    if ticker not in ticker_sell_dict:
         return relevent_sell_info
-    
+
     else:
+        print(f"ticker_sell_dict: {ticker_sell_dict}")
         for i in range(len(ticker_sell_dict[ticker]["date"])):
             the_date = datetime.strptime(ticker_sell_dict[ticker]["date"][i], "%Y-%m-%d")
         
@@ -473,7 +472,7 @@ def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dic
         "percentage change": 0, 
         "percentage portfolio": 0
         }
-    
+    a: int = 0
 
     relevent_buy_dict = create_relevent_buy_dict(ticker,start_date, tickers_buy_dict)
     relevent_sell_dict = create_relevent_sell_dict(ticker,start_date, tickers_sell_dict)
@@ -488,9 +487,14 @@ def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dic
     while True:
 
         try:
-            start_account_dict[ticker]["current price"] = bring_price(find_prices(ticker, start_date.strftime("%Y-%m-%d")), 'close')
-            break
+            if a > 9:
+                start_account_dict[ticker]["current price"] = 0
+                break
+            else:
+                start_account_dict[ticker]["current price"] = bring_price(find_prices(ticker, start_date.strftime("%Y-%m-%d")), 'close')
+                break
         except Exception:
+            a += 1
             start_date = start_date - timedelta(days=1) 
 
     start_account_dict[ticker]["stock value in Portfolio"] =  start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
@@ -1106,7 +1110,6 @@ def calculate_total_value_in_portfolio_profit(profit_dict: dict) -> tuple:
 
     total_initial_value_in_portfolio: float = 0
     total_final_value_in_portfolio: float = 0
-    print(profit_dict)
     for ticker in profit_dict:
 
         total_initial_value_in_portfolio += profit_dict[ticker]["initial stock value in Portfolio"]
@@ -1154,11 +1157,10 @@ def calculate_profit_sum(profit_dict: dict) -> float:
 
     return total_profit
 
-def calculate_percentage_change_profit(profit_dict: dict, total_final_value_in_portfolio: float) -> float:
+def calculate_percentage_change_profit(profit_dict: dict) -> float:
 
     percentage_change: float = 0
     for key in profit_dict:
-        #profit_dict[key]["percentage change"] = profit_dict[key]["final price"] * 100 / total_final_value_in_portfolio
         percentage_change += profit_dict[key]["percentage change"] * profit_dict[key]["percentage in portfolio"] / 100
     
     return percentage_change
@@ -1176,7 +1178,7 @@ def create_all_profit_dict(profit_dict: dict) -> dict:
     (total_initial_value_in_portfolio, total_final_value_in_portfolio) = calculate_total_value_in_portfolio_profit(profit_dict)
     total_profit = calculate_profit_sum(profit_dict)
     profit_dict = update_percentage_in_portfolio(profit_dict, total_final_value_in_portfolio)
-    percentage_change = calculate_percentage_change_profit(profit_dict, total_final_value_in_portfolio)
+    percentage_change = calculate_percentage_change_profit(profit_dict)
     
     
 
