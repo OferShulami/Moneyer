@@ -236,28 +236,64 @@ def main():
     ofer.buy_stock("xle", 4, date="2022-02-04")
     ofer.buy_stock("meta", 4, date="2022-02-04")
     ofer.buy_stock("voo", 2, date="2022-02-04")
-
+    #feb
     ofer.sell_stock("ual", 3, date="2022-02-24")
     ofer.sell_stock("aapl", 2, date="2022-02-24")
     ofer.sell_stock("bito", 12, date="2022-02-24")
     ofer.sell_stock("voo", 6, date="2022-02-24")
-
+    #march
     ofer.buy_stock("voo", 5, date="2022-03-16")
     ofer.buy_stock("bito", 13, date="2022-03-16")
     ofer.buy_stock("ual", 4, date="2022-03-16")
     ofer.buy_stock("aapl", 2, date="2022-03-16")
-
+    #april
     ofer.buy_stock("aapl", 4, date="2022-04-18")
     ofer.buy_stock("bito", 24, date="2022-04-18")
     ofer.buy_stock("meta", 1, date="2022-04-18")
     ofer.buy_stock("aapl", 1, date="2022-04-18")
     ofer.buy_stock("voo", 4, date="2022-04-18")
+    #june
+    ofer.sell_stock("xle", 7, date="2022-06-10")
+    ofer.buy_stock("qqq", 6, date="2022-06-10")
+    ofer.buy_stock("smh", 7, date="2022-06-10")
+    ofer.buy_stock("tsm", 2, date="2022-06-10")
+    ofer.buy_stock("intc", 8, date="2022-06-10")
+    ofer.buy_stock("amd", 2, date="2022-06-10")
+    ofer.buy_stock("nvda", 2, date="2022-06-10")
+    ofer.buy_stock("voo", 5, date="2022-06-10")
+    ofer.buy_stock("aapl", 2, date="2022-06-10")
+    ofer.buy_stock("msft", 1, date="2022-06-10")
+    ofer.buy_stock("ual", 8, date="2022-06-10")
+    ofer.buy_stock("meta", 1, date="2022-06-10")
+    ofer.buy_stock("qqq", 1, date="2022-06-10")
+    ofer.buy_stock("alb", 1, date="2022-06-22")
+    #jule
+    ofer.buy_stock("ual", 6, date="2022-06-22")
+    #agust
+    ofer.sell_stock("alb", 1, date="2022-08-02")
+    ofer.buy_stock("ual", 6, date="2022-06-22")
+    ofer.sell_stock("tsm", 2, date="2022-08-19")
+    ofer.buy_stock("msft", 14, date="2022-06-22")
+    ofer.buy_stock("aal", 67, date="2022-06-22")
+    ofer.buy_stock("ual", 21, date="2022-06-22")
+    ofer.buy_stock("intc", 57, date="2022-06-22")
+    ofer.buy_stock("smh", 9, date="2022-06-22")
+    ofer.buy_stock("tsla", 2, date="2022-06-22")
+    ofer.buy_stock("nvda", 17, date="2022-06-22")
+    ofer.buy_stock("qqq", 32, date="2022-06-22")
+    ofer.buy_stock("voo", 13, date="2022-06-22")
+    ofer.buy_stock("aapl", 31, date="2022-06-29")
+    ofer.buy_stock("googl", 55, date="2022-06-29")
+    #dec
+    ofer.sell_stock("crsr", 17, date="2022-12-07")
+    ofer.sell_stock("abnb", 2, date="2022-12-07")
 
 
     #ofer.show_account_info()
     print("2021:")
     ofer.show_profit(ticker="all", start_date="2021-01-01", end_date="2022-01-01")
-
+    print("2022:")
+    ofer.show_profit(ticker="all", start_date="2022-01-01", end_date="2023-01-01")
 
 
 
