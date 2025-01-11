@@ -284,13 +284,21 @@ def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, 
 
 def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit: float, initial_invest: float, ticker: str) -> dict:
 
-    profit_dict[ticker]["final amount"] = start_account_dict[ticker]["amount"]
-    profit_dict[ticker]["final price"] = start_account_dict[ticker]["current price"]
-    profit_dict[ticker]["final stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
-    profit_dict[ticker]["profit"] = profit
-    profit_dict[ticker]["percentage change"] = profit / (initial_invest) * 100
+    keys_to_remove = []
+    for key in profit_dict:
+        if profit_dict[key]["initial price"] == 0:
+            keys_to_remove.append(key)
+    for key in keys_to_remove:
+        del profit_dict[key]
 
-
+    if ticker in keys_to_remove:
+        pass
+    else:
+        profit_dict[ticker]["final amount"] = start_account_dict[ticker]["amount"]
+        profit_dict[ticker]["final price"] = start_account_dict[ticker]["current price"]
+        profit_dict[ticker]["final stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+        profit_dict[ticker]["profit"] = profit
+        profit_dict[ticker]["percentage change"] = profit / (initial_invest) * 100
 
     return profit_dict
 
@@ -449,7 +457,6 @@ def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dic
         return relevent_sell_info
 
     else:
-        print(f"ticker_sell_dict: {ticker_sell_dict}")
         for i in range(len(ticker_sell_dict[ticker]["date"])):
             the_date = datetime.strptime(ticker_sell_dict[ticker]["date"][i], "%Y-%m-%d")
         

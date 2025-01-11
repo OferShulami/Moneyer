@@ -1,1 +1,8 @@
-print(
+   # print("2021:")
+    # ofer.show_profit(ticker="all", start_date="2021-01-01", end_date="2022-01-01")
+    # print("2022:")
+    # ofer.show_profit(ticker="all", start_date="2022-01-01", end_date="2023-01-01")
+    # print("2023:")
+    # ofer.show_profit(ticker="all", start_date="2023-01-01", end_date="2024-01-01")
+    # print("2024:")
+    # ofer.show_profit(ticker="all", start_date="2024-01-01", end_date="2025-01-01")
