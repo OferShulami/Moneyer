@@ -529,7 +529,7 @@ def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
         return next_num
 
 def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, buy_sell_date: str,
-                       tickers_dict: dict) -> None:
+                       tickers_dict: dict) -> dict:
     """
     Update the dictionary with stock data.
     :param ticker: str
@@ -545,7 +545,7 @@ def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, b
     tickers_dict[ticker]["price"].append(stock_price)
     tickers_dict[ticker]["date"].append(buy_sell_date)
 
-    return None
+    return tickers_dict
 
 def bring_price(lst: list, order: str) -> float:
     """
@@ -684,7 +684,7 @@ def make_order_table(data: dict) -> str:
     # Return the table as a string
     return table_with_lines_center
 
-def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
+def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> dict:
     """
     Updates a stock data dictionary with a new purchase or price information.
 
@@ -707,14 +707,14 @@ def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: 
         stock_price = bring_price(find_prices(ticker, date), "close")
         if date is None:
             date = now_date()
-            update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
+            return update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
         else:
-            update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
+            return update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
     else:
         stock_price = price_per_stock
         if date is None:
             date = now_date()
-        update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
+        return update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
 
 def show_order_info(tickers_dict: dict, order: str) -> None:
     """
@@ -942,7 +942,7 @@ def calculate_sum_portfolio(account_dict: dict) -> float:
 
     return portfolio_sum_value
 
-def create_account_sum(account_dict: dict) -> None:
+def create_account_sum(account_dict: dict) -> dict:
     """
     Calculates and adds a summary of the portfolio to the account dictionary.
 
@@ -979,7 +979,7 @@ def create_account_sum(account_dict: dict) -> None:
     account_dict['total']['percentage portfolio'] = 100
     account_dict['total']['current price'] = average_current_price
 
-    return None
+    return account_dict
 
 def calculate_average_current_price(total_value_in_portfolio: float, total_amount_of_stock: int) -> float:
     """
