@@ -1,4 +1,9 @@
 import calculate_func
+from colorama import Fore, Style, init
+from tabulate import tabulate
+
+# אתחול הצבעים
+init(autoreset=True)
 
 class Account:
     """
@@ -180,10 +185,49 @@ class Account:
         """Displays detailed sell order information."""
         calculate_func.show_order_info(self.tickers_sell_dict, order="sell")
 
-    def show_account_info(self) -> None:
-        """Displays the current portfolio account summary table."""
-        calculate_func.create_account_sum(self.account_dict)
-        calculate_func.make_account_table(self.account_dict)
+    def show_account_info(self):
+        """מציגה את תיק ההשקעות בפורמט מקצועי וצבעוני לטרמינל"""
+        if not self.account_dict:
+            print("\n[!] Portfolio is empty.")
+            return
+
+        table_data = []
+
+        for ticker, info in self.account_dict.items():
+            # שימוש ב-.get() מאפשר לנו למשוך נתונים בלי שהקוד יקרוס אם השם מעט שונה
+            amount = info.get('amount', 0)
+            init_price = info.get('initial price', 0)
+            curr_price = info.get('current price', 0)
+
+            # כאן היה ה-KeyError: שינינו ל-lowercase 'price change'
+            price_change = info.get('price change', 0)
+            change_pct = info.get('percentage change', 0)
+            weight = info.get('percentage portfolio', 0)
+
+            # בחירת צבע: ירוק לרווח, אדום להפסד
+            color = Fore.GREEN if change_pct >= 0 else Fore.RED
+            reset = Style.RESET_ALL
+            sign = "+" if change_pct >= 0 else ""
+
+            row = [
+                ticker.upper(),
+                f"{amount}",
+                f"${init_price:,.2f}",
+                f"${curr_price:,.2f}",
+                f"{color}{sign}{price_change:,.2f}{reset}",
+                f"{color}{sign}{change_pct:.2f}%{reset}",
+                f"{weight:.1f}%"
+            ]
+            table_data.append(row)
+
+        headers = [
+            "Ticker", "Shares", "Avg. Cost",
+            "Market Price", "Gain/Loss ($)", "Change (%)", "Weight"
+        ]
+
+        print(f"\n{'=' * 20} PORTFOLIO SUMMARY {'=' * 20}")
+        print(tabulate(table_data, headers=headers, tablefmt="fancy_grid", stralign="center"))
+        print(f"{'=' * 61}\n")
 
     def show_profit(self, ticker: str = "all", start_date: str = "first buy time", end_date: str = "now") -> None:
         """
@@ -236,7 +280,11 @@ def main():
     print(f"[*] Connecting to Yahoo Finance...")
     print(f"[*] Loading assets for {ofer.name}...")
 
-    ofer.buy_stock("crsr", 17, date="2021-12-01")
+    ofer.buy_stock("AAPL", 10, date="2026-03-25")
+    ofer.buy_stock("GOOGL", 10, date="2026-03-25")
+    ofer.buy_stock("META", 10, date="2026-03-25")
+    ofer.buy_stock("NVDA", 10, date="2026-03-25")
+    ofer.buy_stock("MSFT", 10, date="2026-03-25")
 
     print(f"\n{'-' * 20} PORTFOLIO SUMMARY {'-' * 20}")
     ofer.show_account_info()
