@@ -5,992 +5,1158 @@ import numpy as np
 from tabulate import tabulate
 import pandas_market_calendars as mcal
 
-def setup_pd() -> None:
 
+def setup_pd() -> None:
+    """
+    Configures Pandas display options to ensure tables are fully visible in the terminal.
+
+    Adjusts the output width and removes limits on displayed rows and columns
+    to prevent data truncation during portfolio reporting.
+    """
     pd.set_option('display.width', 1000)  # Set a wide display width
     pd.set_option('display.max_rows', None)  # Show all rows
     pd.set_option('display.max_columns', None)  # Show all columns
-    return None
 
+    return None
 def find_end_time(start_date: str) -> str:
     """
-    Find the next date based on a given start date after validation.
+    Calculates the next consecutive date based on a validated start date.
 
-    parameters:
-    start_date (str): The starting date in YYYY-MM-DD format.
+    Args:
+        start_date (str): The starting date in 'YYYY-MM-DD' format.
 
     Returns:
-    str: The next valid date in the same format.
+        str: The following day's date in 'YYYY-MM-DD' format.
 
     Raises:
-    ValueError: If there is any issue with the start date or date calculation.
+        ValueError: If the start_date is invalid or the date calculation fails.
     """
     try:
-        end_time = calculate_next_date(start_date)  # calculate the next date
+        # Calculate the next date using the helper function
+        end_time = calculate_next_date(start_date)
         return end_time
     except ValueError as e:
         raise ValueError(f"Error in finding end time: {e}")
-
 def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
     """
-    calculates the next date given a date string and returns it in the same format.
+    Calculates the next consecutive date given a date string and returns it in the same format.
 
-    parameters:
-    date_string (str): The starting date as a string.
-    date_format (str): The format of the input date string (default: 'YYYY-MM-DD').
+    Args:
+        date_string (str): The starting date as a string.
+        date_format (str): The format of the input date string (default: '%Y-%m-%d').
 
     Returns:
-    str: The next date as a string in the same format.
+        str: The next date as a string in the same format.
 
     Raises:
-    ValueError: If the input date is invalid or doesn't match the expected format.
+        ValueError: If the input date is invalid or doesn't match the expected format.
 
     Example:
-    calculate_next_date("2023-12-31")
-    '2024-01-01'
+        >>> calculate_next_date("2023-12-31")
+        '2024-01-01'
     """
     try:
-        # parse the input date
+        # Parse the input date string into a datetime object
         given_date = datetime.strptime(date_string, date_format)
-        # Add one day
+
+        # Increment the date by exactly one day
         next_date = given_date + timedelta(days=1)
-        # Return the next date in the same format
+
+        # Return the resulting date formatted as the original input
         return next_date.strftime(date_format)
     except ValueError as e:
         raise ValueError(f"Invalid date or format: {e}")
-
 def sub_date(start_date: str, end_date: str) -> tuple:
-    
+    """
+    Standardizes and validates a pair of dates (start and end) using a helper function.
 
-    start_date = sub_date_halper(start_date)
-    end_date = sub_date_halper(end_date)
+    This function ensures that both input dates are processed through the 'sub_date_helper'
+    logic to handle business days, holidays, or formatting adjustments.
+
+    Args:
+        start_date (str): The initial start date string.
+        end_date (str): The initial end date string.
+
+    Returns:
+        tuple: A tuple containing (processed_start_date, processed_end_date) as strings.
+    """
+    # Note: Corrected the typo from 'halper' to 'helper'
+    start_date = sub_date_helper(start_date)
+    end_date = sub_date_helper(end_date)
 
     return (start_date, end_date)
+def sub_date_helper(date: str) -> str:
+    """
+    Adjusts a given date backwards until a valid trading day is found.
 
-def sub_date_halper(date: str) -> str:
-    
+    This function attempts to validate a date. If validation fails (e.g., the market
+    was closed), it subtracts one day and retries until 'check_date' succeeds.
+
+    Args:
+        date (str): The initial date string to validate and potentially adjust.
+
+    Returns:
+        str: The nearest valid trading date (in the past) in 'YYYY-MM-DD' format.
+    """
     while True:
-
         try:
+            # Attempt to validate the current date
             date = check_date(date)
-            break            
+            break
         except Exception:
-            date = datetime.strptime(date, "%Y-%m-%d")
-            date = date - timedelta(days=1) 
-            date = date.strftime("%Y-%m-%d")
+            # If invalid (market closed or format issue), subtract one day and retry
+            date_obj = datetime.strptime(date, "%Y-%m-%d")
+            date_obj = date_obj - timedelta(days=1)
+            date = date_obj.strftime("%Y-%m-%d")
 
     return date
-
 def check_date(start_date: str) -> str:
     """
+    Validates the format and market status of a specific date.
 
-    :param start_date:
-    :return:
+    Args:
+        start_date (str): The date string to be checked.
+
+    Returns:
+        str: The fixed date string in 'YYYY-MM-DD' format if valid.
+
+    Raises:
+        ValueError: If the date format is irreparable or the date is invalid
+                    according to market rules.
     """
-
+    # Attempt to fix common formatting issues
     fix_start_date = fix_date_format(start_date)
+
     if fix_start_date == "Error":
         raise ValueError(f"Invalid date format: {start_date}")
-    
+
+    # Verify if the date meets specific market start requirements
     if check_start_date(fix_start_date):
         return fix_start_date
     else:
-        raise ValueError("check_date")
-
+        raise ValueError(f"Date validation failed for: {fix_start_date}")
 def check_start_date(start_date: str) -> bool:
     """
-    Validates the start date and ensures it is after the NASDAQ founding date (1971-02-08).
+    Validates that a date is post-NASDAQ founding (1971-02-08) and was a trading day.
 
-    parameters:
-    start_date (str): The start date in YYYY-MM-DD format.
+    Args:
+        start_date (str): The date string in 'YYYY-MM-DD' format.
 
     Returns:
-    bool: The valid start date.
+        bool: True if the date is a valid NASDAQ trading day.
 
     Raises:
-    ValueError: If the date is invalid or before NASDAQ's founding.
+        ValueError: If the date is before NASDAQ founding or if the market was closed.
     """
-    start_year_NASDAQ = 1971
-    start_month_NASDAQ = 2
-    start_day_NASDAQ = 8
-
-    # Ensure the date is after NASDAQ's founding date (1971-02-08)
-    nasdaq_start_date = datetime(start_year_NASDAQ, start_month_NASDAQ, start_day_NASDAQ)
+    # NASDAQ founding date: February 8, 1971
+    nasdaq_founding_date = datetime(1971, 2, 8)
     parsed_date = datetime.strptime(start_date, "%Y-%m-%d")
 
-    if parsed_date < nasdaq_start_date:
-        raise ValueError(f"The NASDAQ stock market did not exist before {nasdaq_start_date.strftime('%Y-%m-%d')}.")
+    # Ensure the requested date is historically possible for NASDAQ data
+    if parsed_date < nasdaq_founding_date:
+        raise ValueError(
+            f"The NASDAQ stock market did not exist before {nasdaq_founding_date.strftime('%Y-%m-%d')}."
+        )
 
-
+    # Check if the market was actually open on this specific day
     if start_date in get_nasdaq_open_days(start_date, start_date):
         return True
-
     else:
-        raise ValueError(f"The NASDAQ stock market was close on {start_date}.")
-
+        raise ValueError(f"The NASDAQ stock market was closed on {start_date}.")
 def fix_date_format(date_string: str) -> str:
     """
-    Tries to fix a date string that may be in various formats and return it in the standard 'YYYY-MM-DD' format.
+    Attempts to parse various date formats and standardize them to 'YYYY-MM-DD'.
 
-    The function attempts to parse the input date string using a list of common date formats.
-    If the string matches any of these formats, it is converted into the 'YYYY-MM-DD' format.
-    If no valid format is found, the function returns 'Invalid date format'.
-    :param date_string: A string representing a date, possibly in a non-standard format.
-    :return: The date in 'YYYY-MM-DD' format if successfully parsed, otherwise 'Invalid date format'.
+    The function tries common international and US formats. If successful,
+    it returns the standardized ISO string.
+
+    Args:
+        date_string (str): A string representing a date in an unknown format.
+
+    Returns:
+        str: Standardized 'YYYY-MM-DD' string, or "Error" if parsing fails.
     """
-
-    # Define a list of possible date formats
+    # List of common formats to attempt parsing
     possible_formats = [
-        "%Y-%m-%d",  # YYYY-MM-DD
-        "%d/%m/%Y",  # DD/MM/YYYY
-        "%m/%d/%Y",  # MM/DD/YYYY
-        "%Y/%m/%d",  # YYYY/MM/DD
-        "%d-%m-%Y",  # DD-MM-YYYY
-        "%m-%d-%Y",  # MM-DD-YYYY
-        "%Y.%m.%d",  # YYYY.MM.DD
+        "%Y-%m-%d",  # 2023-12-31
+        "%d/%m/%Y",  # 31/12/2023
+        "%m/%d/%Y",  # 12/31/2023
+        "%Y/%m/%d",  # 2023/12/31
+        "%d-%m-%Y",  # 31-12-2023
+        "%m-%d-%Y",  # 12-31-2023
+        "%Y.%m.%d",  # 2023.12.31
     ]
 
     for date_format in possible_formats:
         try:
-            # Try parsing the date with each possible format
             parsed_date = datetime.strptime(date_string, date_format)
-            # Return the date in the correct YYYY-MM-DD format
             return parsed_date.strftime("%Y-%m-%d")
         except ValueError:
-            # If the date doesn't match the current format, continue to the next format
             continue
 
-    # If none of the formats match, return an error message or None
+    # Return "Error" as a sentinel value if no format matches
     return "Error"
-
-def get_nasdaq_open_days(start_date, end_date):
+def get_nasdaq_open_days(start_date: str, end_date: str) -> list:
     """
-    Get the days the NASDAQ is open between two dates.
+    Retrieves a list of actual trading days when NASDAQ was open between two dates.
 
-    :param start_date: str, start date in 'YYYY-MM-DD' format.
-    :param end_date: str, end date in 'YYYY-MM-DD' format.
-    :return: List of open dates (as strings).
+    Args:
+        start_date (str): Start date in 'YYYY-MM-DD'.
+        end_date (str): End date in 'YYYY-MM-DD'.
+
+    Returns:
+        list: A list of strings representing open trading days.
     """
-    # Load NASDAQ calendar
-    nasdaq = mcal.get_calendar('NASDAQ')
+    # Load the official NASDAQ market calendar
+    nasdaq_calendar = mcal.get_calendar('NASDAQ')
 
-    # Get schedule for the specified range
-    schedule = nasdaq.schedule(start_date=start_date, end_date=end_date)
+    # Fetch the market schedule for the specified range
+    schedule = nasdaq_calendar.schedule(start_date=start_date, end_date=end_date)
 
-    # Convert the index (open days) to a list of strings
+    # Convert the resulting DatetimeIndex to a clean list of ISO date strings
     open_days = schedule.index.strftime('%Y-%m-%d').tolist()
 
     return open_days
+def find_prices(ticker: str, start_date: str) -> list | None:
+    """
+    Fetches the stock's OHLCV (Open, High, Low, Close, Volume) data for a specific date.
 
-def find_prices(the_ticker: str, start_date: str) -> list:
+    Args:
+        ticker (str): The stock ticker symbol (e.g., 'AAPL').
+        start_date (str): The target date in 'YYYY-MM-DD' format.
+
+    Returns:
+        list | None: A list containing [Open, High, Low, Close, Volume] as floats,
+                     or None if data is unavailable or an error occurs.
     """
-    Fetch the stock's open, high, low, close prices, and volume for a specific date.
-    Returns a list of prices or None if no data is available.
-    """
+    # Determine the next day to define the 1-day interval for history()
     end_date = find_end_time(start_date)
 
     try:
-        # Fetch stock data
-        stock = yf.Ticker(the_ticker)
+        stock = yf.Ticker(ticker)
+        # Fetch historical data for the specific day
         data = stock.history(start=start_date, end=end_date, interval='1d')
-        
+
         if data.empty:
-            raise Exception(f"No trading data for {the_ticker} on {start_date}.")
-            
-        # Extract specific columns
-        open_price = data['Open'].iloc[0]
-        high_price = data['High'].iloc[0]
-        low_price = data['Low'].iloc[0]
-        close_price = data['Close'].iloc[0]
-        volume = data['Volume'].iloc[0]
+            raise ValueError(f"No trading data available for {ticker} on {start_date}.")
+
+        # Extract specific columns using iloc and ensure float type
+        open_price = float(data['Open'].iloc[0])
+        high_price = float(data['High'].iloc[0])
+        low_price = float(data['Low'].iloc[0])
+        close_price = float(data['Close'].iloc[0])
+        volume = float(data['Volume'].iloc[0])
 
         return [open_price, high_price, low_price, close_price, volume]
 
     except Exception as e:
-        print(f"Error: {e}")
-        
+        print(f"Error fetching prices for {ticker}: {e}")
+        return None
 def is_valid_ticker(ticker: str) -> bool:
     """
-    checks if a ticker symbol is valid by attempting to fetch its data using yfinance.
+    Validates a ticker symbol by attempting to fetch its metadata from Yahoo Finance.
 
-    parameters:
+    Args:
         ticker (str): The ticker symbol to validate.
 
     Returns:
-        bool: True if the ticker is valid, False otherwise.
+        bool: True if the ticker is recognized and has a valid profile, False otherwise.
     """
     try:
-        # create a Ticker object
         stock = yf.Ticker(ticker)
-
-        # Use get_info to fetch ticker information
+        # Fetching ticker information to confirm its existence
         info = stock.get_info()
 
-        # check if 'shortName' exists and is non-empty
+        # A valid ticker typically contains a 'shortName' identifier
         return 'shortName' in info and bool(info['shortName'])
     except Exception as e:
-        # Log or handle exceptions if needed
-        print(f"Error validating ticker '{ticker}': {e}")
+        print(f"Validation error for ticker '{ticker}': {e}")
         return False
-
 def now_date() -> str:
     """
-    Gets the current date in 'YYYY-MM-DD' format.
+    Retrieves the current system date in a standardized format.
 
     Returns:
-        str: Today's date as a string in 'YYYY-MM-DD' format.
+        str: Today's date formatted as 'YYYY-MM-DD'.
     """
-    # Get today's date and format it as a string
-    today_date = datetime.now().strftime("%Y-%m-%d")
+    return datetime.now().strftime("%Y-%m-%d")
+def profit(ticker: str, start_date_str: str, end_date_str: str,
+           tickers_buy_dict: dict, tickers_sell_dict: dict,
+           account_dict: dict, profit_dict: dict) -> dict:
+    """
+    Calculates the profit and performance metrics for a specific ticker over a given timeframe.
 
-    return today_date
+    This function reconstructs the portfolio state at the start date, processes a timeline
+    of buy/sell actions during the period, and calculates the final profit and percentage change.
 
-def profit(ticker: str, start_date: str, end_date: str, tickers_buy_dict: dict, tickers_sell_dict: dict, account_dict: dict, profit_dict) -> dict:
+    Args:
+        ticker (str): The stock ticker symbol.
+        start_date_str (str): Calculation start date ('YYYY-MM-DD').
+        end_date_str (str): Calculation end date ('YYYY-MM-DD').
+        tickers_buy_dict (dict): Global dictionary of all buy transactions.
+        tickers_sell_dict (dict): Global dictionary of all sell transactions.
+        account_dict (dict): Current global account state.
+        profit_dict (dict): The dictionary to be updated with calculation results.
+
+    Returns:
+        dict: The updated profit_dict containing metrics for the requested ticker.
+    """
     ticker = ticker.upper()
     start_account_dict = {}
-    profit: float = 0
+    current_profit: float = 0
     initial_invest: float = 0
 
-    # Convert to datetime variables
-    start_date = datetime.strptime(start_date, "%Y-%m-%d")
-    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+    # Convert string dates to datetime objects for timeline processing
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
 
-    start_account_dict = create_start_account_dict(ticker, start_date, tickers_buy_dict, tickers_sell_dict, initial_invest, start_account_dict)
-    
+    # Step 1: Establish the portfolio state as it was on the start_date
+    start_account_dict = create_start_account_dict(
+        ticker, start_date, tickers_buy_dict, tickers_sell_dict, initial_invest, start_account_dict
+    )
+
+    # Step 2: Initialize the profit dictionary with the starting values
     profit_dict = update_initial_profit_dict(start_account_dict, profit_dict, ticker)
 
+    # Calculate initial investment value at the start of the period
     initial_invest = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
 
+    # Step 3: Create and process a chronological timeline of all actions within the dates
     timeline = create_timeline(ticker, start_date, end_date, tickers_buy_dict, tickers_sell_dict)
-
     sorted_timeline = sorted(timeline, key=lambda x: x[4])
 
     for action in sorted_timeline:
+        # Calculate profit contribution of each action (Buy/Sell/End)
+        current_profit += go_over_action(start_account_dict, action, current_profit)
 
-        profit += go_over_action(start_account_dict, action, profit)
+        # Track buy actions to update the 'initial investment' base for percentage calculations
         if action[0] == "buy":
             initial_invest += action[2] * action[3]
+
+            # Fill in initial values if the stock was first acquired during this period
             if profit_dict[action[1]]["initial price"] == 0:
                 profit_dict[action[1]]["initial price"] = action[3]
             if profit_dict[action[1]]["initial amount"] == 0:
-                profit_dict[action[1]]["initial amount"] = action[2]     
+                profit_dict[action[1]]["initial amount"] = action[2]
             if profit_dict[action[1]]["initial stock value in Portfolio"] == 0:
-                 profit_dict[action[1]]["initial stock value in Portfolio"] = profit_dict[action[1]]["initial amount"] * profit_dict[action[1]]["initial price"] 
+                profit_dict[action[1]]["initial stock value in Portfolio"] = (
+                        profit_dict[action[1]]["initial amount"] * profit_dict[action[1]]["initial price"]
+                )
 
-
-    profit_dict = update_final_profit_dict(start_account_dict, profit_dict, profit, initial_invest, ticker)
+    # Step 4: Finalize the dictionary with closing prices and final percentage changes
+    profit_dict = update_final_profit_dict(start_account_dict, profit_dict, current_profit, initial_invest, ticker)
 
     return profit_dict
+def update_final_profit_dict(start_account_dict: dict, profit_dict: dict,
+                             profit_val: float, total_invested: float, ticker: str) -> dict:
+    """
+    Finalizes the profit dictionary entry for a ticker after processing the timeline.
 
-def update_final_profit_dict(start_account_dict: dict, profit_dict: dict, profit: float, initial_invest: float, ticker: str) -> dict:
+    Args:
+        start_account_dict (dict): The adjusted state of the account at the end of the period.
+        profit_dict (dict): The dictionary being populated.
+        profit_val (float): The total calculated profit/loss.
+        total_invested (float): The total cost basis used for percentage calculation.
+        ticker (str): The stock ticker symbol.
 
-    keys_to_remove = []
-    for key in profit_dict:
-        if profit_dict[key]["initial price"] == 0:
-            keys_to_remove.append(key)
+    Returns:
+        dict: The profit_dict after cleanup and final calculations.
+    """
+    # Cleanup: Remove entries that didn't have a valid initial price (no holdings)
+    keys_to_remove = [key for key in profit_dict if profit_dict[key]["initial price"] == 0]
     for key in keys_to_remove:
         del profit_dict[key]
 
-    if ticker in keys_to_remove:
-        pass
-    else:
+    if ticker not in keys_to_remove:
+        # Set final state metrics
         profit_dict[ticker]["final amount"] = start_account_dict[ticker]["amount"]
         profit_dict[ticker]["final price"] = start_account_dict[ticker]["current price"]
-        profit_dict[ticker]["final stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
-        profit_dict[ticker]["profit"] = profit
-        profit_dict[ticker]["percentage change"] = profit / (initial_invest) * 100
+        profit_dict[ticker]["final stock value in Portfolio"] = (
+                start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+        )
+        profit_dict[ticker]["profit"] = profit_val
+
+        # Calculate ROI percentage for the period
+        if total_invested != 0:
+            profit_dict[ticker]["percentage change"] = (profit_val / total_invested) * 100
+        else:
+            profit_dict[ticker]["percentage change"] = 0
 
     return profit_dict
-
 def update_initial_profit_dict(start_account_dict: dict, profit_dict: dict, ticker: str) -> dict:
+    """
+    Sets the baseline values in the profit dictionary at the start of the timeframe.
 
+    Args:
+        start_account_dict (dict): Account state at the start_date.
+        profit_dict (dict): Dictionary to initialize.
+        ticker (str): The stock ticker symbol.
 
+    Returns:
+        dict: The profit_dict with initial values set for the ticker.
+    """
+    # Reset/Initialize the specific ticker entry
     profit_dict = reset_profit_dict(profit_dict, ticker)
 
+    # Capture state at the very beginning of the requested period
     profit_dict[ticker]["initial amount"] = start_account_dict[ticker]["amount"]
     profit_dict[ticker]["initial price"] = start_account_dict[ticker]["initial price"]
-    profit_dict[ticker]["initial stock value in Portfolio"] = start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+    profit_dict[ticker]["initial stock value in Portfolio"] = (
+            start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
+    )
 
     return profit_dict
-        
 def reset_profit_dict(profit_dict: dict, ticker: str) -> dict:
-    
-    profit_dict[ticker] = {
+    """
+    Initializes or resets a ticker's entry in the profit dictionary with zeroed metrics.
 
+    Args:
+        profit_dict (dict): The dictionary storing profit metrics for various tickers.
+        ticker (str): The stock ticker symbol to initialize.
+
+    Returns:
+        dict: The updated profit_dict with the new ticker structure.
+    """
+    profit_dict[ticker] = {
         "initial amount": 0,
         "final amount": 0,
         "initial price": 0,
         "final price": 0,
         "initial stock value in Portfolio": 0,
         "final stock value in Portfolio": 0,
-        "profit": 0, 
+        "profit": 0,
         "percentage change": 0,
         "percentage in portfolio": 0,
     }
-
     return profit_dict
+def go_over_action(start_account_dict: dict, action: tuple, accrued_profit: float) -> float:
+    """
+    Processes a single timeline action and calculates the resulting profit change.
 
-def go_over_action(start_account_dict: dict, action: tuple, profit: float) -> float:
+    Handles three types of actions:
+    1. 'buy': Updates holdings and calculates profit based on price movement since the last state.
+    2. 'sell': Updates holdings and applies profit calculation (including a 25% cost/tax adjustment).
+    3. 'end': Finalizes state at the end of the timeframe and calculates remaining unrealized profit.
 
+    Args:
+        start_account_dict (dict): The temporary account state during simulation.
+        action (tuple): A tuple containing (order_type, ticker, amount, price, date).
+        accrued_profit (float): The profit accumulated up to this point in the timeline.
 
+    Returns:
+        float: The incremental profit/loss generated by this specific action.
 
-    if action[0] == "buy":
+    Raises:
+        ValueError: If an unknown action type is encountered in the timeline.
+    """
+    # Extract action details for clarity
+    action_type = action[0]
+    ticker = action[1]
+    action_amount = action[2]
+    action_price = action[3]
+    action_date = action[4]
 
-        old_amount = start_account_dict[action[1]]["amount"]
-        old_price = start_account_dict[action[1]]["current price"]
-        new_current_price = action[3]
+    incremental_profit = 0
 
-            
-        start_account_dict[action[1]]["amount"] += action[2]
-        start_account_dict[action[1]]["initial price"] = new_current_price
-        start_account_dict[action[1]]["current price"] = new_current_price
-        start_account_dict[action[1]]["stock value in Portfolio"] = new_current_price * start_account_dict[action[1]]["amount"]
-        start_account_dict[action[1]]["Price Change"] = 0
-        start_account_dict[action[1]]["percentage change"] = 0
-        start_account_dict[action[1]]["percentage portfolio"] = 0
+    if action_type == "buy":
+        old_amount = start_account_dict[ticker]["amount"]
+        old_price = start_account_dict[ticker]["current price"]
+        new_current_price = action_price
 
-        if old_amount == 0:
-            profit = 0
-                    
-        else:
+        # Update state
+        start_account_dict[ticker]["amount"] += action_amount
+        start_account_dict[ticker]["initial price"] = new_current_price
+        start_account_dict[ticker]["current price"] = new_current_price
+        start_account_dict[ticker]["stock value in Portfolio"] = new_current_price * start_account_dict[ticker][
+            "amount"]
 
-            profit = (new_current_price - old_price) * old_amount
+        # Reset relative metrics for the new cost basis
+        start_account_dict[ticker].update({
+            "Price Change": 0,
+            "percentage change": 0,
+            "percentage portfolio": 0
+        })
 
+        if old_amount > 0:
+            incremental_profit = (new_current_price - old_price) * old_amount
 
+    elif action_type == "sell":
+        old_amount = start_account_dict[ticker]["amount"]
+        old_price = start_account_dict[ticker]["current price"]
+        new_current_price = action_price
 
-    elif action[0] == "sell":
+        start_account_dict[ticker]["amount"] -= action_amount
+        start_account_dict[ticker]["initial price"] = new_current_price
+        start_account_dict[ticker]["current price"] = new_current_price
+        start_account_dict[ticker]["stock value in Portfolio"] = new_current_price * start_account_dict[ticker][
+            "amount"]
 
-        old_amount = start_account_dict[action[1]]["amount"]
-        old_price = start_account_dict[action[1]]["current price"]
-        new_current_price = action[3]
+        start_account_dict[ticker].update({
+            "Price Change": 0,
+            "percentage change": 0,
+            "percentage portfolio": 0
+        })
 
+        # Profit calculation includes a 0.75 multiplier (potential tax/fee adjustment)
+        incremental_profit = (new_current_price - old_price) * action_amount * 0.75 + \
+                             (new_current_price - old_price) * start_account_dict[ticker]["amount"]
 
-        start_account_dict[action[1]]["amount"] -= action[2]
-        start_account_dict[action[1]]["initial price"] = new_current_price
-        start_account_dict[action[1]]["current price"] = new_current_price
-        start_account_dict[action[1]]["stock value in Portfolio"] = new_current_price * start_account_dict[action[1]]["amount"]
-        start_account_dict[action[1]]["Price Change"] = 0
-        start_account_dict[action[1]]["percentage change"] = 0
-        start_account_dict[action[1]]["percentage portfolio"] = 0
+    elif action_type == "end":
+        old_price = start_account_dict[ticker]["current price"]
+        # Fetch the actual closing price for the final date
+        prices = find_prices(ticker, action_date.strftime("%Y-%m-%d"))
+        new_current_price = bring_price(prices, 'close')
 
+        start_account_dict[ticker]["initial price"] = new_current_price
+        start_account_dict[ticker]["current price"] = new_current_price
+        start_account_dict[ticker]["stock value in Portfolio"] = new_current_price * start_account_dict[ticker][
+            "amount"]
 
-        profit = (new_current_price - old_price) * action[2] * 0.75 + (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
+        start_account_dict[ticker].update({
+            "Price Change": 0,
+            "percentage change": 0,
+            "percentage portfolio": 0
+        })
 
+        incremental_profit = (new_current_price - old_price) * start_account_dict[ticker]["amount"]
 
+    else:
+        raise ValueError(f"Unknown action type '{action_type}' in timeline processing!")
 
+    return incremental_profit
+def create_timeline(ticker: str, start_date: datetime, end_date: datetime,
+                    tickers_buy_dict: dict, tickers_sell_dict: dict) -> list:
+    """
+    Compiles a chronological list of buy and sell transactions for a specific ticker.
 
-    elif action[0] == "end":
-        
-        old_price = start_account_dict[action[1]]["current price"]
-        new_current_price = bring_price(find_prices(action[1], action[4].strftime("%Y-%m-%d")), 'close')
+    Args:
+        ticker (str): The stock ticker to track.
+        start_date (datetime): The beginning of the period.
+        end_date (datetime): The end of the period.
+        tickers_buy_dict (dict): Dictionary containing purchase history.
+        tickers_sell_dict (dict): Dictionary containing sales history.
 
-        
-        start_account_dict[action[1]]["initial price"] = new_current_price
-        start_account_dict[action[1]]["current price"] = new_current_price
-        start_account_dict[action[1]]["stock value in Portfolio"] = new_current_price * start_account_dict[action[1]]["amount"]
-        start_account_dict[action[1]]["Price Change"] = 0
-        start_account_dict[action[1]]["percentage change"] = 0
-        start_account_dict[action[1]]["percentage portfolio"] = 0
-
-        profit = (new_current_price - old_price) * start_account_dict[action[1]]["amount"]
-
-
-
-    else: 
-        raise Exception("Error in timeline!")
-    
-    
-    return profit    
-
-def create_timeline(ticker: str, start_date: datetime, end_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict) -> list:
-
+    Returns:
+        list: A list of tuples, each representing an action to be processed.
+    """
     timeline = []
-    #[order, ticker, amount, price, date)]
 
-    if ticker not in tickers_buy_dict: 
-        pass
-    
-    else:
+    # Process Buy transactions
+    if ticker in tickers_buy_dict:
         for i in range(len(tickers_buy_dict[ticker]["amount"])):
+            date_str = tickers_buy_dict[ticker]["date"][i]
+            current_date = datetime.strptime(date_str, "%Y-%m-%d")
 
-            date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
-            if date >= start_date and date <= end_date:
-                timeline.append(("buy", ticker, tickers_buy_dict[ticker]["amount"][i], tickers_buy_dict[ticker]["price"][i], date))
+            if start_date <= current_date <= end_date:
+                timeline.append((
+                    "buy", ticker,
+                    tickers_buy_dict[ticker]["amount"][i],
+                    tickers_buy_dict[ticker]["price"][i],
+                    current_date
+                ))
 
-    if ticker not in tickers_sell_dict: 
-        pass
-    
-    else:
+    # Process Sell transactions
+    if ticker in tickers_sell_dict:
         for i in range(len(tickers_sell_dict[ticker]["amount"])):
+            date_str = tickers_sell_dict[ticker]["date"][i]
+            current_date = datetime.strptime(date_str, "%Y-%m-%d")
 
-            date = datetime.strptime(tickers_sell_dict[ticker]["date"][i], "%Y-%m-%d")
-            if date >= start_date and date <= end_date:
-                timeline.append(("sell", ticker, tickers_sell_dict[ticker]["amount"][i], tickers_sell_dict[ticker]["price"][i], date))
+            if start_date <= current_date <= end_date:
+                timeline.append((
+                    "sell", ticker,
+                    tickers_sell_dict[ticker]["amount"][i],
+                    tickers_sell_dict[ticker]["price"][i],
+                    current_date
+                ))
 
+    # Append the termination point for the simulation
     timeline.append(("end", ticker, 0, 0, end_date))
-                    
+
     return timeline
+def create_relevant_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict) -> list:
+    """
+    Filters purchase amounts for a ticker that occurred on or before a specific date.
 
-def create_relevent_buy_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict,) -> list:
+    Args:
+        ticker (str): The stock ticker symbol.
+        start_date (datetime): The cutoff date for relevant transactions.
+        tickers_buy_dict (dict): Global dictionary containing purchase history.
 
-    relevent_buy_info = []
+    Returns:
+        list: A list of purchase amounts (integers) that are relevant to the start_date.
+    """
+    relevant_buy_amounts = []
 
-    if ticker not in tickers_buy_dict: 
-        return relevent_buy_info
-    else:
+    if ticker not in tickers_buy_dict:
+        return relevant_buy_amounts
 
-        for i in range(len(tickers_buy_dict[ticker]["date"])):
-            the_date = datetime.strptime(tickers_buy_dict[ticker]["date"][i], "%Y-%m-%d")
-            
-            # Filter dates that are >= start_date
-            if the_date <= start_date:
-                relevent_buy_info.append(tickers_buy_dict[ticker]["amount"][i])
-                
+    # Iterate through dates and amounts simultaneously
+    for date_str, amount in zip(tickers_buy_dict[ticker]["date"], tickers_buy_dict[ticker]["amount"]):
+        transaction_date = datetime.strptime(date_str, "%Y-%m-%d")
 
-        return relevent_buy_info
+        # Include transactions that happened on or before the reconstruction date
+        if transaction_date <= start_date:
+            relevant_buy_amounts.append(amount)
 
-def create_relevent_sell_dict(ticker: str, start_date: datetime, ticker_sell_dict: dict) -> list:
+    return relevant_buy_amounts
+def create_relevant_sell_dict(ticker: str, start_date: datetime, tickers_sell_dict: dict) -> list:
+    """
+    Filters sale amounts for a ticker that occurred on or before a specific date.
 
-    relevent_sell_info = []
+    Args:
+        ticker (str): The stock ticker symbol.
+        start_date (datetime): The cutoff date for relevant transactions.
+        tickers_sell_dict (dict): Global dictionary containing sales history.
 
-    if ticker not in ticker_sell_dict:
-        return relevent_sell_info
+    Returns:
+        list: A list of sale amounts (integers) that are relevant to the start_date.
+    """
+    relevant_sell_amounts = []
 
-    else:
-        for i in range(len(ticker_sell_dict[ticker]["date"])):
-            the_date = datetime.strptime(ticker_sell_dict[ticker]["date"][i], "%Y-%m-%d")
-        
-            # Filter dates that are >= start_date
-            if the_date <= start_date:
-                relevent_sell_info.append(ticker_sell_dict[ticker]["amount"][i])
-            
+    if ticker not in tickers_sell_dict:
+        return relevant_sell_amounts
 
-    return relevent_sell_info
+    for date_str, amount in zip(tickers_sell_dict[ticker]["date"], tickers_sell_dict[ticker]["amount"]):
+        transaction_date = datetime.strptime(date_str, "%Y-%m-%d")
 
-def create_start_account_dict(ticker: str, start_date: datetime, tickers_buy_dict: dict, tickers_sell_dict: dict, initial_invest: float, start_account_dict: dict) -> dict:
+        if transaction_date <= start_date:
+            relevant_sell_amounts.append(amount)
 
+    return relevant_sell_amounts
+def create_start_account_dict(ticker: str, start_date: datetime,
+                              tickers_buy_dict: dict, tickers_sell_dict: dict,
+                              initial_invest: float, start_account_dict: dict) -> dict:
+    """
+    Reconstructs the account state (shares and price) for a ticker at a specific past date.
+
+    Calculates the total shares held by summing all buys and subtracting all sells
+    up to the start_date. It also searches back for the last valid market closing price.
+
+    Args:
+        ticker (str): The stock ticker symbol.
+        start_date (datetime): The point in time to reconstruct.
+        tickers_buy_dict (dict): Global purchase history.
+        tickers_sell_dict (dict): Global sales history.
+        initial_invest (float): Initial investment value (contextual).
+        start_account_dict (dict): The dictionary to be populated with the reconstructed state.
+
+    Returns:
+        dict: The updated start_account_dict with the ticker's historical state.
+    """
+    # Initialize the historical state structure
     start_account_dict[ticker] = {
-
         "amount": 0,
         "initial price": 0,
         "current price": 0,
         "stock value in Portfolio": 0,
         "Price Change": 0,
-        "percentage change": 0, 
+        "percentage change": 0,
         "percentage portfolio": 0
-        }
-    a: int = 0
+    }
 
-    relevent_buy_dict = create_relevent_buy_dict(ticker,start_date, tickers_buy_dict)
-    relevent_sell_dict = create_relevent_sell_dict(ticker,start_date, tickers_sell_dict)
+    # Gather all relevant transactions up to this date
+    relevant_buys = create_relevant_buy_dict(ticker, start_date, tickers_buy_dict)
+    relevant_sells = create_relevant_sell_dict(ticker, start_date, tickers_sell_dict)
 
-    for amount in relevent_buy_dict:
-        start_account_dict[ticker]["amount"] += amount
-    
-    for amount in relevent_sell_dict:
-        start_account_dict[ticker]["amount"] -= amount
+    # Calculate net shares held at that point in time
+    start_account_dict[ticker]["amount"] = sum(relevant_buys) - sum(relevant_sells)
 
-
+    # Lookback logic: Find the last valid closing price if the market was closed on start_date
+    attempts = 0
+    search_date = start_date
     while True:
-
         try:
-            if a > 9:
+            if attempts > 9:  # Limit search to 10 days back
                 start_account_dict[ticker]["current price"] = 0
                 break
-            else:
-                start_account_dict[ticker]["current price"] = bring_price(find_prices(ticker, start_date.strftime("%Y-%m-%d")), 'close')
-                break
-        except Exception:
-            a += 1
-            start_date = start_date - timedelta(days=1) 
 
-    start_account_dict[ticker]["stock value in Portfolio"] =  start_account_dict[ticker]["amount"] * start_account_dict[ticker]["current price"]
-    if start_account_dict[ticker]["amount"] != 0:
-        start_account_dict[ticker]["initial price"] = start_account_dict[ticker]["current price"]
+            # Attempt to fetch the closing price for the specific date
+            price_data = find_prices(ticker, search_date.strftime("%Y-%m-%d"))
+            start_account_dict[ticker]["current price"] = bring_price(price_data, 'close')
+            break
+        except Exception:
+            attempts += 1
+            search_date -= timedelta(days=1)
+
+            # Finalize state metrics
+    current_shares = start_account_dict[ticker]["amount"]
+    closing_price = start_account_dict[ticker]["current price"]
+
+    start_account_dict[ticker]["stock value in Portfolio"] = current_shares * closing_price
+
+    # Set the 'initial price' base for the upcoming simulation period
+    if current_shares != 0:
+        start_account_dict[ticker]["initial price"] = closing_price
     else:
-       start_account_dict[ticker]["initial price"] = 0
-        
+        start_account_dict[ticker]["initial price"] = 0
 
     return start_account_dict
-
 def update_dict_ticker_num(ticker: str, tickers_dict: dict) -> int:
     """
-    Updates the ticker number to a given ticker symbol.
-    :param ticker:
-    :param tickers_dict:
-    :return: num to add to ticker symbol
-    """
-    num = tickers_dict[ticker]["num"]
-    if not num:
-        num = 1
-        return num
-    else:
-        next_num = num[-1] + 1
-        return next_num
+    Determines the next transaction sequence number for a specific ticker.
 
-def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float, buy_sell_date: str,
-                       tickers_dict: dict) -> None:
+    Args:
+        ticker (str): The stock ticker symbol.
+        tickers_dict (dict): The dictionary containing transaction history for tickers.
+
+    Returns:
+        int: The next available transaction number (starts at 1).
     """
-    Update the dictionary with stock data.
-    :param ticker: str
-    :param num: int
-    :param amount: int
-    :param stock_price: float
-    :param buy_date: str
-    :param tickers_dict: dict (to store the data)
-    :return: None
+    # Retrieve the existing list of numbers or an empty list if not found
+    num_list = tickers_dict[ticker].get("num", [])
+
+    # Return 1 if the list is empty, otherwise increment the last number
+    return num_list[-1] + 1 if num_list else 1
+def update_dict_ticker(ticker: str, num: int, amount: int, stock_price: float,
+                       buy_sell_date: str, tickers_dict: dict) -> None:
     """
+    Appends a new set of trade data to the ticker's history in the dictionary.
+
+    Args:
+        ticker (str): The stock ticker symbol.
+        num (int): The transaction sequence number.
+        amount (int): The quantity of shares.
+        stock_price (float): The price per share.
+        buy_sell_date (str): The transaction date in 'YYYY-MM-DD' format.
+        tickers_dict (dict): The dictionary where data is stored.
+    """
+    # Append values to their respective lists within the ticker's entry
     tickers_dict[ticker]["num"].append(num)
     tickers_dict[ticker]["amount"].append(amount)
     tickers_dict[ticker]["price"].append(stock_price)
     tickers_dict[ticker]["date"].append(buy_sell_date)
 
     return None
-
-def bring_price(lst: list, order: str) -> float:
+def bring_price(price_list: list, order_type: str) -> float:
     """
-    return the price according the given order.
-    :param lst: the return of find_prices.
-    :param order: high, open, close, low, volume
-    :return: float price
+    Extracts a specific price point from a price data list based on the requested order.
+
+    The input list is expected to follow the OHLCV structure:
+    [Open, High, Low, Close, Volume].
+
+    Args:
+        price_list (list): A list containing price and volume data.
+        order_type (str): The type of price to return ('open', 'high', 'low', 'close', 'volume').
+
+    Returns:
+        float: The requested price or volume value.
+
+    Raises:
+        ValueError: If an invalid order_type is provided.
     """
-    if order == "open":
-        return lst[0]
-    if order == "high":
-        return lst[1]
-    if order == "low":
-        return lst[2]
-    if order == "close":
-        return lst[3]
-    if order == "volume":
-        return lst[4]
+    # Mapping table for much cleaner and faster lookups compared to multiple IFs
+    index_map = {
+        "open": 0,
+        "high": 1,
+        "low": 2,
+        "close": 3,
+        "volume": 4
+    }
 
-    raise ValueError(f"Invalid order: {order}")
+    try:
+        index = index_map[order_type.lower()]
+        return price_list[index]
+    except (KeyError, IndexError):
+        raise ValueError(f"Invalid order type or data list: {order_type}")
+def round_numeric_values(data: dict, precision: int = 3) -> dict:
+    """
+    Recursively rounds all numeric values (float, np.float64) in a nested dictionary.
 
-def round_numeric_values(data: dict) -> dict:
+    Args:
+        data (dict): The nested dictionary containing stock data.
+        precision (int): Number of decimal places to round to. Defaults to 3.
+
+    Returns:
+        dict: The dictionary with all applicable values rounded.
+    """
     for outer_key, inner_dict in data.items():
         for key, value in inner_dict.items():
+            # Check for both standard Python floats and NumPy floats
             if isinstance(value, (float, np.float64)):
-                inner_dict[key] = round(value, 3)
+                inner_dict[key] = round(float(value), precision)
 
     return data
-
 def make_account_table(data: dict) -> None:
-
     """
-    creates a formatted table from a nested dictionary containing stock portfolio data.
-    parameters:
-    :param data: A nested dictionary where the outer keys represent stock tickers,
-                 and the inner dictionaries contain details like amount, initial price,
-                 current price, and percentage change.
-    :return: None
+    Standardizes portfolio data and prints a formatted table to the terminal.
+
+    Determines if the input data represents an 'Account' summary or a 'Profit' summary
+    by analyzing the keys, then applies formatting via the tabulate library.
+
+    Args:
+        data (dict): Nested dictionary containing portfolio or profit data.
+
+    Raises:
+        ValueError: If the dictionary keys do not match expected account or profit structures.
     """
-    data = round_numeric_values(data)
-    profit_key_list = ['initial amount', 'final amount', 'initial price', 'final price', 'initial stock value in Portfolio', 'final stock value in Portfolio', 'profit', 'percentage change', 'percentage in portfolio']
-    account_key_list = ['amount', 'initial price', 'stock value in portfolio', 'price change', 'percentage change', 'percentage portfolio', 'current price']
-    data_key_list = []
+    # Define expected key sets for validation
+    profit_keys = {
+        'initial amount', 'final amount', 'initial price', 'final price',
+        'initial stock value in Portfolio', 'final stock value in Portfolio',
+        'profit', 'percentage change', 'percentage in portfolio'
+    }
+    account_keys = {
+        'amount', 'initial price', 'stock value in portfolio',
+        'price change', 'percentage change', 'percentage portfolio', 'current price'
+    }
 
-    for key in data["total"]:
-        data_key_list.append(key)        
+    # Identify the type of data by looking at the 'total' entry keys
+    if "total" not in data:
+        raise ValueError("Data dictionary must contain a 'total' entry for validation.")
 
-    if data_key_list == account_key_list:
+    current_keys = set(data["total"].keys())
+
+    # Case 1: Account Portfolio Table
+    if current_keys == account_keys:
         refresh_current_price_in_account_dict(data)
-        # Round numerical values to 3 decimal places
-        for outer_key, inner_dict in data.items():
-            for key, value in inner_dict.items():
-                if isinstance(value, (float, np.float64)):
-                    inner_dict[key] = round(value, 3)
+        # Apply rounding once after the price refresh
+        data = round_numeric_values(data)
 
-        # create a DataFrame
+        # Create DataFrame and format
         table = pd.DataFrame.from_dict(data, orient='index')
+        formatted_table = tabulate(
+            table,
+            headers='keys',
+            tablefmt='grid',
+            numalign='center',
+            stralign='center'
+        )
+        print(f"\n[ACCOUNT PORTFOLIO INFO]\n{formatted_table}")
 
-        # Use tabulate to print the table with lines
-        table_with_lines_center = tabulate(table, headers='keys', tablefmt='grid', numalign='center', stralign='center')
-
-        print(f"account info:\n{table_with_lines_center}")
-
-    elif data_key_list == profit_key_list:
-        # Create a DataFrame
+    # Case 2: Profit/Historical Performance Table
+    elif current_keys == profit_keys:
+        data = round_numeric_values(data)
         table = pd.DataFrame.from_dict(data, orient="index")
-        table.index.name = "Stock Ticker"
+
+        table.index.name = "Ticker"
         table.reset_index(inplace=True)
 
-        # Rename columns for readability
+        # Rename columns for professional presentation
         table.columns = [
-            "Ticker", "Init Amt", "Final Amt", "Init Price", 
-            "Final Price", "Init Value", "Final Value", "Profit", 
-            "% Change", "% Portfolio"
+            "Ticker", "Init Amt", "Final Amt", "Init Price",
+            "Final Price", "Init Value", "Final Value", "Profit ($)",
+            "Change (%)", "Portfolio (%)"
         ]
 
-        # Use tabulate for compact formatting
-        table_with_lines = tabulate(
+        formatted_table = tabulate(
             table,
             headers="keys",
             tablefmt="fancy_grid",
             numalign="right",
             stralign="center",
+            showindex=False
         )
-
-        print(f"profit:\n{table_with_lines}")
+        print(f"\n[PROFIT ANALYSIS REPORT]\n{formatted_table}")
 
     else:
-
-        raise("error in make account dict")  
-
+        raise ValueError(f"Invalid data structure. Keys found: {current_keys}")
 def refresh_current_price_in_account_dict(account_dict: dict) -> None:
     """
-    Refreshes the current price of each stock in the account dictionary.
+    Updates the 'current price' for all stocks in the dictionary using real-time data.
 
-    This function updates the "current price" field for each stock in the portfolio by
-    fetching the latest price using the `get_current_price` function.
-
-    :param account_dict: dict
-                         A dictionary containing details about the portfolio. Each key is a stock ticker,
-                         and the value is a dictionary with at least the following fields:
-                         - "current price": The most recent market price of the stock.
-    :return: None
-             This function modifies the `account_dict` in place and does not return any value.
+    Args:
+        account_dict (dict): Portfolio dictionary where keys are tickers.
     """
-
     for ticker in account_dict:
-        if ticker == 'total':
+        # Skip the summary row
+        if ticker.lower() == 'total':
             continue
-        else:
-            account_dict[ticker]["current price"] = get_current_price(ticker)
-        
-    
-    return None
 
+        new_price = get_current_price(ticker)
+        if new_price is not None:
+            account_dict[ticker]["current price"] = new_price
 def make_order_table(data: dict) -> str:
     """
-    Creates a formatted table from a dictionary containing order data.
+    Creates a formatted ASCII table from a dictionary of order data.
 
-    :param data: A dictionary where keys represent column headers, and values are lists of data.
-    :return: A string representation of the formatted table.
+    Transposes the dictionary (where keys are headers and values are lists)
+    into a row-based format suitable for tabular display.
+
+    Args:
+        data (dict): Dictionary with column names as keys and data lists as values.
+
+    Returns:
+        str: A string containing the formatted table.
     """
-    # Create a DataFrame
-    table = pd.DataFrame.from_dict(data, orient="index").T  # Transpose to make rows into columns
+    if not data or not any(data.values()):
+        return "No order data available."
 
-    # Use tabulate to create the formatted table without index
-    table_with_lines_center = tabulate(
-        table,
-        headers="keys",  # Use column names as headers
+    # Create a DataFrame and transpose to align data into columns
+    table_df = pd.DataFrame.from_dict(data, orient="index").T
+
+    # Generate the formatted table using a clean grid style
+    formatted_table = tabulate(
+        table_df,
+        headers="keys",
         tablefmt="grid",
         numalign="center",
         stralign="center",
-        showindex=False,  # Disable the index column
+        showindex=False
     )
 
-    # Return the table as a string
-    return table_with_lines_center
-
-def super_update(tickers_dict: dict, ticker: str, amount: int, price_per_stock: float = None, date: str = None) -> None:
+    return formatted_table
+def super_update(tickers_dict: dict, ticker: str, amount: int,
+                 price_per_stock: float = None, date: str = None) -> None:
     """
-    Updates a stock data dictionary with a new purchase or price information.
+    Orchestrates the update of a ticker's transaction history.
 
-    This function adds a new entry or updates an existing one in the tickers_dict
-    for a given stock ticker. It calculates the stock price if not provided and
-    handles the date of purchase.
-    :param tickers_dict: A dictionary where each key is a ticker symbol, and the
-                         value is another dictionary containing stock details.
-    :param ticker: The stock ticker symbol (e.g., "AApL").
-    :param amount: The number of shares purchased.
-    :param price_per_stock: The price per stock. If None, it fetches
-                            the closing price for the given date.
-    :param date: The purchase date in "YYYY-MM-DD" format. If None, the
-                 current date is used.
-    :return: None
+    This function handles the logic of determining the transaction number,
+    fetching market prices if not provided, and standardizing the date
+    before committing the update to the dictionary.
+
+    Args:
+        tickers_dict (dict): The dictionary storing transaction history.
+        ticker (str): The stock ticker symbol.
+        amount (int): Number of shares in the transaction.
+        price_per_stock (float, optional): Price per share. If None,
+                                           fetches the closing price for the date.
+        date (str, optional): Transaction date ('YYYY-MM-DD'). Defaults to today.
     """
+    # 1. Get the next transaction sequence number
     num = update_dict_ticker_num(ticker, tickers_dict)
 
+    # 2. Normalize the date (use current date if None)
+    if date is None:
+        date = now_date()
+
+    # 3. Fetch price if not explicitly provided
     if price_per_stock is None:
-        stock_price = bring_price(find_prices(ticker, date), "close")
-        if date is None:
-            date = now_date()
-            update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
-        else:
-            update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
-    else:
-        stock_price = price_per_stock
-        if date is None:
-            date = now_date()
-        update_dict_ticker(ticker, num, amount, stock_price, date, tickers_dict)
+        price_data = find_prices(ticker, date)
+        price_per_stock = bring_price(price_data, "close")
 
-def show_order_info(tickers_dict: dict, order: str) -> None:
+    # 4. Perform a single update call with the prepared data
+    update_dict_ticker(ticker, num, amount, price_per_stock, date, tickers_dict)
+def show_order_info(tickers_dict: dict, order_type: str) -> None:
     """
-    Displays detailed order information for each stock ticker in the provided dictionary.
+    Iterates through all tickers and prints their detailed transaction history.
 
-    This function iterates through the `tickers_dict`, extracts information for each ticker
-    (amount, price, and date of transactions), and prints it in a tabulated format.
+    Args:
+        tickers_dict (dict): Dictionary containing the history of orders.
+        order_type (str): Type of info to display ('buy' or 'sell').
 
-    :param tickers_dict: A dictionary where each key is a stock ticker symbol, and the value
-                         is another dictionary containing lists of amounts, prices, and dates
-                         of transactions for that ticker.
-    :return: None
+    Raises:
+        ValueError: If an invalid order_type is provided.
     """
-    if order == "buy":
-        print("your buying info:\n")
-    elif order == "sell":
-        print("your selling info:\n")
-    
+    # Validate and set header title
+    if order_type.lower() == "buy":
+        print("\n[HISTORICAL BUYING ACTIVITY]")
+    elif order_type.lower() == "sell":
+        print("\n[HISTORICAL SELLING ACTIVITY]")
     else:
-        raise ValueError("go back to user.show_info")
-    
-    for ticker in tickers_dict:
-        print(f"{ticker}:")
-        data = {
-            "num": tickers_dict[ticker]["num"],
-            "amount": tickers_dict[ticker]["amount"],
-            "price": tickers_dict[ticker]["price"],
-            "date": tickers_dict[ticker]["date"],
+        raise ValueError(f"Invalid order_type: {order_type}. Use 'buy' or 'sell'.")
+
+    print("=" * 30)
+
+    # Display a table for each ticker in the history
+    for ticker, history in tickers_dict.items():
+        print(f"\nTicker: {ticker.upper()}")
+
+        # Prepare the data structure for the table maker
+        table_data = {
+            "ID": history["num"],
+            "Amount": history["amount"],
+            "Price ($)": history["price"],
+            "Date": history["date"],
         }
 
-        # Call make_order_table and print the result
-        print(make_order_table(data), "\n")
-
+        # Render and print the table
+        print(make_order_table(table_data))
 def get_current_price(ticker_symbol: str) -> float | None:
     """
-    Fetches the current price of a stock using the yfinance library.
+    Fetches the real-time market price of a stock using yfinance.
 
-    parameters:
-    ticker_symbol (str): The stock ticker symbol (e.g., 'AApL', 'GOOGL').
+    Args:
+        ticker_symbol (str): The stock ticker symbol (e.g., 'AAPL').
 
     Returns:
-    float: The current stock price.
+        float | None: The last market price if successful, None if 'total' is passed.
 
     Raises:
-    ValueError: If the ticker symbol is invalid or data is unavailable.
+        ValueError: If price data cannot be retrieved or the ticker is invalid.
     """
+    if ticker_symbol.lower() == "total":
+        return None
+
     try:
-        # create a Ticker object
-        if ticker_symbol == "total":
-            return None
         stock = yf.Ticker(ticker_symbol)
-
-        # Use fast_info for quick access to the current price
+        # fast_info provides low-latency access to the last price
         current_price = stock.fast_info["last_price"]
-        return current_price
-    except KeyError:
-        raise ValueError(f"could not retrieve the price for ticker '{ticker_symbol}'.")
+
+        if current_price is None:
+            raise ValueError(f"No price data found for {ticker_symbol}")
+
+        return float(current_price)
     except Exception as e:
-        raise ValueError(f"An error occurred: {e}")
-
-def update_account_dict(order: bool, ticker: str, account_dict: dict, sell_dict: dict = None,
-                        buy_dict: dict = None) -> dict:
+        raise ValueError(f"Could not retrieve price for '{ticker_symbol}': {e}")
+def update_account_dict(order_type_buy: bool, ticker: str, account_dict: dict,
+                        sell_dict: dict = None, buy_dict: dict = None) -> dict:
     """
-    Updates the account dictionary to reflect changes from a buy or sell order.
+    Updates the portfolio state based on a Buy or Sell transaction.
 
-    The function modifies the `account_dict` based on whether a buy or sell operation is performed.
-    It calculates and updates stock values, price changes, and percentage changes for each stock
-    in the portfolio. For buy operations, it also calculates weighted average prices for new purchases.
+    Recalculates share amounts, weighted average initial prices (for buys),
+    and current market value/performance metrics.
 
-    :param order: Indicates the type of order.
-                  `True` for buy, `False` for sell.
-    :param ticker: The stock ticker symbol for which the operation is performed.
+    Args:
+        order_type_buy (bool): True for a Buy order, False for a Sell order.
+        ticker (str): The stock ticker symbol.
+        account_dict (dict): The portfolio state to be updated.
+        sell_dict (dict, optional): Transaction history for sells.
+        buy_dict (dict, optional): Transaction history for buys.
 
-    :param account_dict: The main dictionary holding portfolio details, where keys are stock tickers and values
-                         are dictionaries with stock-related information.
-    :param sell_dict: A dictionary containing sell order details (amounts and prices for the `ticker`).
-                      Defaults to None.
-    :param buy_dict: A dictionary containing buy order details (amounts and prices for the `ticker`).
-                     Defaults to None.
-
-
-    -------
-    dict
-        The updated `account_dict` reflecting the changes made by the order.
+    Returns:
+        dict: The updated account_dict.
 
     Raises:
-    ------
-    ValueError
-        If both `sell_dict` and `buy_dict` are None, since one is required to update the account.
-
-    Notes:
-    ------
-    - The function calculates the following metrics:
-        * Stock value in portfolio.
-        * price change (absolute).
-        * percentage change (relative to the initial price).
-    - If the order is a buy and the stock already exists in the account, the initial price is
-      recalculated as a weighted average.
-    - calls `update_percentage_portfolio` to adjust portfolio-wide percentage metrics.
-
-    Returns: None
-        """
-
-    # check if both sell_dict and buy_dict are None
+        ValueError: If required transaction dictionaries are missing or
+                    if trying to sell more shares than owned.
+    """
     if sell_dict is None and buy_dict is None:
-        raise ValueError("You are missing dict")
+        raise ValueError("Transaction data (buy_dict or sell_dict) must be provided.")
 
+    ticker = ticker.upper()
+    current_market_price = get_current_price(ticker)
 
+    # --- CASE 1: BUY ORDER ---
+    if order_type_buy:
+        new_shares = buy_dict[ticker]["amount"][-1]
+        new_buy_price = buy_dict[ticker]["price"][-1]
 
-
-    current_price = get_current_price(ticker)
-
-
-
-    # check if it's a buy order
-    if order:
-
-        new_amount = buy_dict[ticker]["amount"][-1]
-        new_price = buy_dict[ticker]["price"][-1]
-        
-        # If account_dict doesn't have the ticker
         if ticker not in account_dict:
-            # Update account dict by creating new ticker
-            account_dict[ticker] = {}
-            account_dict[ticker]["amount"] = new_amount
-            account_dict[ticker]["initial price"] = new_price
-            account_dict[ticker]["current price"] = current_price
-            account_dict[ticker]["stock value in portfolio"] = new_amount * current_price
-            account_dict[ticker]["price change"] = (current_price * new_amount) - (
-                    new_price * new_amount)
-            account_dict[ticker]["percentage change"] = ((current_price - new_price) /
-                                                         new_price) * 100
-
-        # If account_dict has this ticker
+            # Initialize new ticker entry
+            account_dict[ticker] = {
+                "amount": new_shares,
+                "initial price": new_buy_price
+            }
         else:
-
-
-            old_amount = account_dict[ticker]["amount"]
+            # Update existing ticker using Weighted Average Price
+            old_shares = account_dict[ticker]["amount"]
             old_initial_price = account_dict[ticker]["initial price"]
 
-            total_amount = old_amount + new_amount
+            total_shares = old_shares + new_shares
+            weighted_avg_price = ((old_initial_price * old_shares) + (new_buy_price * new_shares)) / total_shares
 
-            # Update values in account_dict
-            account_dict[ticker]["amount"] = total_amount
-            account_dict[ticker]["initial price"] = ((old_initial_price * old_amount) + (new_price * new_amount)) / total_amount
-            account_dict[ticker]["current price"] = current_price
-            account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
-            account_dict[ticker]["price change"] = (current_price * total_amount) - (
-                    account_dict[ticker]["initial price"] * total_amount)
-            account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
-                                                         account_dict[ticker]["initial price"]) * 100
-    # check if it's a sell order
+            account_dict[ticker]["amount"] = total_shares
+            account_dict[ticker]["initial price"] = weighted_avg_price
+
+    # --- CASE 2: SELL ORDER ---
     else:
-            
-        new_amount = sell_dict[ticker]["amount"][-1]
-        new_price = sell_dict[ticker]["price"][-1]
-        old_amount = account_dict[ticker]["amount"]
-        total_amount = old_amount - new_amount
+        shares_to_sell = sell_dict[ticker]["amount"][-1]
+        current_shares = account_dict[ticker]["amount"]
+        remaining_shares = current_shares - shares_to_sell
 
-        if total_amount == 0:
+        if remaining_shares < 0:
+            raise ValueError(f"Insufficient shares to sell {shares_to_sell} of {ticker}.")
+
+        if remaining_shares == 0:
             del account_dict[ticker]
-        
-        elif total_amount < 0:
-            raise ValueError("cant sold more stocks")
-        
-        elif total_amount > 0:
+        else:
+            account_dict[ticker]["amount"] = remaining_shares
 
-            account_dict[ticker]["amount"] = total_amount
-            account_dict[ticker]["current price"] = current_price
-            account_dict[ticker]["stock value in portfolio"] = total_amount * current_price
-            account_dict[ticker]["price change"] = (current_price * total_amount) - (
-            account_dict[ticker]["initial price"] * total_amount)
-            account_dict[ticker]["percentage change"] = ((current_price - account_dict[ticker]["initial price"]) /
-                                                         account_dict[ticker]["initial price"]) * 100
+    # --- POST-TRANSACTION RECALCULATION ---
+    # If the ticker still exists in the portfolio, update its performance metrics
+    if ticker in account_dict:
+        data = account_dict[ticker]
+        amt = data["amount"]
+        init_p = data["initial price"]
 
-        else: 
-            raise ValueError("error")        
+        data["current price"] = current_market_price
+        data["stock value in portfolio"] = amt * current_market_price
+        data["price change"] = (current_market_price - init_p) * amt
+        data["percentage change"] = ((current_market_price - init_p) / init_p) * 100
 
-
+    # Refresh portfolio-wide weights
     update_percentage_portfolio(account_dict)
 
     return account_dict
-
 def update_percentage_portfolio(account_dict: dict) -> None:
     """
-    Updates the percentage of each stock's value relative to the total portfolio value.
+    Calculates the weight of each stock relative to the total portfolio value.
 
-    The function calculates the total value of the portfolio by summing the stock values
-    and then updates the "percentage portfolio" for each stock in the `account_dict`.
-
-    :param account_dict: The dictionary containing details about the portfolio.
-                         Each key is a stock ticker, and its value is a dictionary with details such as
-                         "stock value in portfolio" and other metrics.
-
-    Notes:
-    ------
-    - Assumes the presence of a "stock value in portfolio" field in `account_dict` for all tickers.
-    - The "percentage portfolio" value is stored as a percentage (0-100).
-    - calls `calculate_sum_portfolio` to compute the total portfolio value.
-    :return: None
-             Updates the `account_dict` in place.
+    Args:
+        account_dict (dict): The portfolio dictionary to update.
     """
+    total_val = calculate_sum_portfolio(account_dict)
 
-    sum_val = calculate_sum_portfolio(account_dict)
-    for ticker in account_dict:
-        account_dict[ticker]["percentage portfolio"] = account_dict[ticker]["stock value in portfolio"] / sum_val * 100
+    if total_val == 0:
+        return
 
+    for ticker, info in account_dict.items():
+        if ticker.lower() == 'total':
+            continue
+        # Calculate percentage (0-100)
+        info["percentage portfolio"] = (info["stock value in portfolio"] / total_val) * 100
 def calculate_sum_portfolio(account_dict: dict) -> float:
     """
-    calculates the total value of the portfolio by summing the stock values of all tickers.
+    Calculates the aggregate market value of the entire portfolio.
 
-    This function iterates through each ticker in the `account_dict` and adds up the
-    "stock value in portfolio" for each one to compute the total portfolio value.
+    Iterates through all tickers and sums their 'stock value in portfolio'.
+    Automatically skips the 'total' summary row to prevent double-counting.
 
-    :param account_dict: The dictionary containing details about the portfolio.
-                         Each key is a stock ticker, and its value is a dictionary with at least the
-                         "stock value in portfolio" field.
-    :return: The total value of the portfolio, computed as the sum of "stock value in portfolio"
-             for each ticker.
+    Args:
+        account_dict (dict): Dictionary containing portfolio assets.
+
+    Returns:
+        float: The total market value of the portfolio.
     """
-
-    portfolio_sum_value = 0
-    for ticker in account_dict:
-        portfolio_sum_value += account_dict[ticker]["stock value in portfolio"]
-
-    return portfolio_sum_value
-
+    # Use a generator expression with sum() for better performance and readability
+    return sum(
+        info["stock value in portfolio"]
+        for ticker, info in account_dict.items()
+        if ticker.lower() != "total"
+    )
 def create_account_sum(account_dict: dict) -> None:
     """
-    Calculates and adds a summary of the portfolio to the account dictionary.
+    Generates a 'total' summary entry in the account dictionary.
 
-    This function computes the total amount of stocks, the average initial price,
-    the total value of the portfolio, the total price change, and the percentage change
-    for all the stocks in the portfolio. It then adds these summary values to a new entry
-    in the `account_dict` under the key "SUM".
-    :param account_dict: dict
-        A dictionary containing details about the portfolio. Each key is a stock ticker,
-        and the value is a dictionary with information about that stock, such as:
-        - "amount": The amount of shares owned
-        - "initial price": The price at which the stock was initially purchased
-        - "stock value in portfolio": The current value of the stock in the portfolio
-        - "price change": The change in price for that stock
-    :return: None
-        This function modifies the `account_dict` in place by adding the summary under the key "SUM".
+    Aggregates metrics across all holdings, including total shares,
+    weighted average prices, total P&L, and overall portfolio percentage.
+
+    Args:
+        account_dict (dict): The portfolio dictionary to be modified in-place.
     """
+    # 1. Aggregate fundamental metrics
+    total_shares = calculate_total_amount_of_stock(account_dict)
+    avg_init_price = calculate_average_initial_price(account_dict)
+    total_market_value = calculate_total_value_in_portfolio(account_dict)
+    total_pl_abs = calculate_total_price_change(account_dict)
 
-    total_amount_of_stock = calculate_total_amount_of_stock(account_dict)
-    average_initial_price = calculate_average_initial_price(account_dict)
-    total_value_in_portfolio = calculate_total_value_in_portfolio(account_dict)
-    total_price_change = calculate_total_price_change(account_dict)
-    percentage_change = calculate_percentage_change(average_initial_price, total_amount_of_stock,
-                                                    total_value_in_portfolio)
-    average_current_price = calculate_average_current_price(total_value_in_portfolio, total_amount_of_stock)
+    # 2. Calculate derivative metrics with safety checks
+    overall_perc_change = calculate_percentage_change(
+        avg_init_price, total_shares, total_market_value
+    )
+    avg_curr_price = calculate_average_current_price(total_market_value, total_shares)
 
-    account_dict["total"] = {}
-
-    account_dict["total"]["amount"] = total_amount_of_stock
-    account_dict["total"]["initial price"] = average_initial_price
-    account_dict["total"]['stock value in portfolio'] = total_value_in_portfolio
-    account_dict["total"]['price change'] = total_price_change
-    account_dict['total']['percentage change'] = percentage_change
-    account_dict['total']['percentage portfolio'] = 100
-    account_dict['total']['current price'] = average_current_price
-
-    return None
-
-def calculate_average_current_price(total_value_in_portfolio: float, total_amount_of_stock: int) -> float:
+    # 3. Commit the summary row
+    account_dict["total"] = {
+        "amount": total_shares,
+        "initial price": avg_init_price,
+        "current price": avg_curr_price,
+        "stock value in portfolio": total_market_value,
+        "price change": total_pl_abs,
+        "percentage change": overall_perc_change,
+        "percentage portfolio": 100.0  # Total portfolio is always 100% of itself
+    }
+def calculate_average_current_price(total_market_value: float, total_shares: int) -> float:
     """
+    Calculates the volume-weighted average current price of the portfolio.
 
-    :param total_value_in_portfolio:
-    :param total_amount_of_stock:
-    :return:
+    Args:
+        total_market_value (float): Sum of all stock values.
+        total_shares (int): Sum of all shares owned.
+
+    Returns:
+        float: The weighted average price, or 0.0 if no shares are owned.
     """
+    if total_shares == 0:
+        return 0.0
 
-    average_current_price = total_value_in_portfolio / total_amount_of_stock
-    return average_current_price
+    return total_market_value / total_shares
+
+
+
+
+
+
 
 def calculate_percentage_change(average_initial_price: float, total_amount_of_stock: int,
                                 total_value_in_portfolio: float) -> float:
