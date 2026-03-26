@@ -1151,238 +1151,275 @@ def calculate_average_current_price(total_market_value: float, total_shares: int
         return 0.0
 
     return total_market_value / total_shares
-
-
-
-
-
-
-
 def calculate_percentage_change(average_initial_price: float, total_amount_of_stock: int,
                                 total_value_in_portfolio: float) -> float:
     """
-    Calculates and adds a summary of the portfolio to the account dictionary.
-
-    This function computes the total amount of stocks, the average initial price,
-    the total value of the portfolio, the total price change, and the percentage change
-    for all the stocks in the portfolio. It then adds these summary values to a new entry
-    in the `account_dict` under the key "SUM".
-
-
-    :param average_initial_price:
-    :param total_amount_of_stock:
-    :param total_value_in_portfolio:
-    :return: None
-        This function modifies the `account_dict` in place by adding the summary under the key "SUM".
-    """
-
-    percentage_change = (total_value_in_portfolio - (average_initial_price * total_amount_of_stock)) * 100 / (
-            average_initial_price * total_amount_of_stock)
-    return percentage_change
-
-def calculate_total_price_change(account_dict: dict) -> float:
-    """
-    calculates the total price change for all stocks in the portfolio.
-
-    This function sums up the "Price change" for each stock in the `account_dict`
-    to calculate the total price change of the portfolio.
-
-    :param account_dict: dict
-        A dictionary containing details about the portfolio. Each key is a stock ticker,
-        and the value is a dictionary that includes the following field:
-        - "Price change": The change in price for the stock, typically calculated as:
-          (current price * amount) - (initial price * amount)
-    :return:    float
-        The total price change for the portfolio, which is the sum of the "Price change"
-        for all tickers in the `account_dict`.
-    """
-
-    total_price_change = 0
-    for ticker in account_dict:
-        total_price_change += account_dict[ticker]["price change"]
-
-    return total_price_change
-
-def calculate_total_value_in_portfolio(account_dict: dict) -> float:
-    """
-    calculates the total value of all stocks in the portfolio.
-
-    This function sums up the "stock value in portfolio" for each stock in the
-    `account_dict` to calculate the total value of the portfolio.
-
-    :param account_dict: dict
-        A dictionary containing details about the portfolio. Each key is a stock ticker,
-        and the value is a dictionary with at least the following fields:
-        - "stock value in portfolio": The total value of the stock in the portfolio
-          (calculated as amount * current price).
-    :return: float
-        The total value of the portfolio, which is the sum of the "stock value in portfolio"
-        for all the tickers in the `account_dict`.
-    """
-
-    total_value_in_portfolio = 0
-    for ticker in account_dict:
-        total_value_in_portfolio += account_dict[ticker]["stock value in portfolio"]
-    return total_value_in_portfolio
-
-def calculate_average_initial_price(account_dict: dict) -> float:
-    """
-    calculates the average initial price of the stocks in the portfolio.
-
-    The average initial price is computed by summing the initial prices for each stock
-    multiplied by the number of shares held for that stock, and then dividing by the total
-    amount of stocks in the portfolio.
-
-    :param account_dict: A dictionary containing details about the portfolio. Each key is a stock ticker,
-                         and the value is a dictionary with at least the following fields:
-                         - "amount": The quantity of stocks held for that ticker.
-                         - "price": The initial price of the stock at the time it was purchased.
-    :return: The average initial price of all the stocks in the portfolio.
-    """
-
-    total_initial_price = 0
-    for ticker in account_dict:
-        total_initial_price += account_dict[ticker]["amount"] * account_dict[ticker]["initial price"]
-
-    average_initial_price = total_initial_price / calculate_total_amount_of_stock(account_dict)
-    return average_initial_price
-
-def calculate_total_amount_of_stock(account_dict: dict) -> int:
-    """
-    calculates the total amount of stock in the portfolio by summing the amount of each stock.
-
-    This function iterates through each ticker in the `account_dict` and adds up the
-    "amount" for each ticker to compute the total amount of stocks in the portfolio.
-
-    :param account_dict: The dictionary containing details about the portfolio.
-                         Each key is a stock ticker, and its value is a dictionary with at least the
-                         "amount" field, which represents the quantity of stock held for that ticker.
-
-    :return: The total amount of stock in the portfolio, computed as the sum of "amount"
-             for each ticker.
-    """
-
-    total_amount_of_stock = 0
-    for ticker in account_dict:
-        total_amount_of_stock += account_dict[ticker]["amount"]
-
-    return total_amount_of_stock
-
-def calculate_total_amount_of_stock_profit(profit_dict: dict) -> tuple:
-
-
-    total_amount_of_initial_stock: int = 0
-    total_amount_of_final_stock: int = 0
-    for ticker in profit_dict:
-        total_amount_of_initial_stock += profit_dict[ticker]["initial amount"]
-        total_amount_of_final_stock += profit_dict[ticker]["final amount"]
-
-    return (total_amount_of_initial_stock, total_amount_of_final_stock)
-
-def calculate_total_value_in_portfolio_profit(profit_dict: dict) -> tuple:
-
-    total_initial_value_in_portfolio: float = 0
-    total_final_value_in_portfolio: float = 0
-    for ticker in profit_dict:
-
-        total_initial_value_in_portfolio += profit_dict[ticker]["initial stock value in Portfolio"]
-        total_final_value_in_portfolio += profit_dict[ticker]["final stock value in Portfolio"]
-    return (total_initial_value_in_portfolio, total_final_value_in_portfolio) 
-
-def calculate_average_price_of_stock_profit(profit_dict: dict, total_amount_of_initial_stock: int, total_amount_of_final_stock: int) -> tuple:
-    """
-    Calculates the average initial and final stock prices based on the profit dictionary.
+    Calculates the overall percentage return (ROI) for the entire portfolio.
 
     Args:
-        profit_dict (dict): Dictionary containing stock profit details for each ticker.
-        total_amount_of_initial_stock (int): Total initial stock amount across all tickers.
-        total_amount_of_final_stock (int): Total final stock amount across all tickers.
+        average_initial_price (float): The weighted average entry price of all stocks.
+        total_amount_of_stock (int): The total quantity of all shares held.
+        total_value_in_portfolio (float): The current aggregate market value.
 
     Returns:
-        tuple: Average initial price and average final price as floats.
+        float: The percentage change (0-100). Returns 0.0 if the initial cost basis is zero.
     """
-    total_initial_price: float = 0
-    total_final_price: float = 0
+    # Calculate the total cost basis
+    cost_basis = average_initial_price * total_amount_of_stock
 
-    for ticker in profit_dict:
-        total_initial_price += profit_dict[ticker]["initial amount"] * profit_dict[ticker]["initial price"]
-        total_final_price += profit_dict[ticker]["final amount"] * profit_dict[ticker]["final price"]
+    # Safety check: Prevent division by zero if the portfolio is empty or cost is zero
+    if cost_basis == 0:
+        return 0.0
 
-    # Calculate average initial price
-    if total_amount_of_initial_stock > 0:
-        average_initial_price = total_initial_price / total_amount_of_initial_stock
-    else:
-        average_initial_price = profit_dict[ticker]["initial price"]  # Default value if no initial stock
+    # ROI Formula: ((Current Value - Cost Basis) / Cost Basis) * 100
+    percentage_change = (total_value_in_portfolio - cost_basis) * 100 / cost_basis
+    return percentage_change
+def calculate_total_price_change(account_dict: dict) -> float:
+    """
+    Sums the absolute price change (profit/loss in currency) across all portfolio holdings.
 
-    # Calculate average final price
-    if total_amount_of_final_stock > 0:
-        average_final_price = total_final_price / total_amount_of_final_stock
-    else:
-        average_final_price = 0  # Default value if no final stock
+    Args:
+        account_dict (dict): Dictionary containing portfolio assets.
 
-    return average_initial_price, average_final_price
+    Returns:
+        float: Total absolute price change.
+    """
+    total_change = 0
+    for ticker, info in account_dict.items():
+        # CRITICAL: Skip the summary row to avoid double-counting the total
+        if ticker.lower() == "total":
+            continue
+        total_change += info.get("price change", 0)
 
+    return total_change
+def calculate_total_value_in_portfolio(account_dict: dict) -> float:
+    """
+    Sums the current market value of all stocks currently held in the portfolio.
+
+    Args:
+        account_dict (dict): Dictionary containing portfolio assets.
+
+    Returns:
+        float: Total aggregate portfolio value.
+    """
+    total_val = 0
+    for ticker, info in account_dict.items():
+        # CRITICAL: Skip the summary row to avoid double-counting the total
+        if ticker.lower() == "total":
+            continue
+        total_val += info.get("stock value in portfolio", 0)
+
+    return total_val
+def calculate_average_initial_price(account_dict: dict) -> float:
+    """
+    Calculates the volume-weighted average initial purchase price for the entire portfolio.
+
+    The average is computed by summing the (initial price * shares) for every holding
+    and dividing by the total number of shares in the portfolio.
+
+    Args:
+        account_dict (dict): The portfolio dictionary.
+
+    Returns:
+        float: The weighted average initial price, or 0.0 if no shares are held.
+    """
+    total_cost_basis = 0
+
+    # Calculate total shares using the helper function
+    total_shares = calculate_total_amount_of_stock(account_dict)
+
+    # Safety check: Prevent division by zero
+    if total_shares == 0:
+        return 0.0
+
+    for ticker, info in account_dict.items():
+        # Skip the summary row to avoid double-counting
+        if ticker.lower() == "total":
+            continue
+
+        # Add (price * amount) to the total cost basis
+        shares = info.get("amount", 0)
+        price = info.get("initial price", 0)
+        total_cost_basis += shares * price
+
+    return total_cost_basis / total_shares
+def calculate_total_amount_of_stock(account_dict: dict) -> int:
+    """
+    Calculates the aggregate number of all shares held across all tickers.
+
+    Args:
+        account_dict (dict): The portfolio dictionary.
+
+    Returns:
+        int: Total number of shares.
+    """
+    total_shares = 0
+    for ticker, info in account_dict.items():
+        # Skip the summary row to avoid double-counting
+        if ticker.lower() == "total":
+            continue
+        total_shares += info.get("amount", 0)
+
+    return total_shares
+def calculate_total_amount_of_stock_profit(profit_dict: dict) -> tuple:
+    """
+    Calculates the total share count at both the start and end of a profit report period.
+
+    Args:
+        profit_dict (dict): Dictionary containing historical profit metrics.
+
+    Returns:
+        tuple: A tuple containing (total_initial_shares, total_final_shares).
+    """
+    total_initial: int = 0
+    total_final: int = 0
+
+    for ticker, metrics in profit_dict.items():
+        # Skip summary if present
+        if ticker.lower() == "total":
+            continue
+
+        total_initial += metrics.get("initial amount", 0)
+        total_final += metrics.get("final amount", 0)
+
+    return (total_initial, total_final)
+def calculate_total_value_in_portfolio_profit(profit_dict: dict) -> tuple:
+    """
+    Calculates total aggregate initial and final market values from a profit report.
+
+    Args:
+        profit_dict (dict): Dictionary containing historical profit metrics.
+
+    Returns:
+        tuple: (total_initial_market_value, total_final_market_value)
+    """
+    total_initial: float = 0
+    total_final: float = 0
+
+    for ticker, metrics in profit_dict.items():
+        if ticker.lower() == "total":
+            continue
+
+        # Consistent key access using .get() to avoid KeyErrors
+        total_initial += metrics.get("initial stock value in Portfolio", 0)
+        total_final += metrics.get("final stock value in Portfolio", 0)
+
+    return total_initial, total_final
+def calculate_average_price_of_stock_profit(profit_dict: dict,
+                                            total_init_amt: int,
+                                            total_final_amt: int) -> tuple:
+    """
+    Calculates weighted average initial and final stock prices for the report period.
+
+    Args:
+        profit_dict (dict): Dictionary with ticker-specific profit data.
+        total_init_amt (int): Sum of all initial share amounts.
+        total_final_amt (int): Sum of all final share amounts.
+
+    Returns:
+        tuple: (weighted_avg_initial_price, weighted_avg_final_price)
+    """
+    sum_initial_cost: float = 0
+    sum_final_value: float = 0
+
+    for ticker, metrics in profit_dict.items():
+        if ticker.lower() == "total":
+            continue
+
+        sum_initial_cost += metrics["initial amount"] * metrics["initial price"]
+        sum_final_value += metrics["final amount"] * metrics["final price"]
+
+    # Calculate average initial price with safety check
+    avg_initial = sum_initial_cost / total_init_amt if total_init_amt > 0 else 0.0
+
+    # Calculate average final price with safety check
+    avg_final = sum_final_value / total_final_amt if total_final_amt > 0 else 0.0
+
+    return avg_initial, avg_final
 def calculate_profit_sum(profit_dict: dict) -> float:
+    """
+    Calculates the total net profit/loss across all tickers in the report.
 
+    Args:
+        profit_dict (dict): Dictionary containing profit data.
+
+    Returns:
+        float: Total absolute profit.
+    """
     total_profit: float = 0
-    for ticker in profit_dict:
-        total_profit += profit_dict[ticker]["profit"]
+    for ticker, metrics in profit_dict.items():
+        if ticker.lower() == "total":
+            continue
+        total_profit += metrics.get("profit", 0)
 
     return total_profit
-
 def calculate_percentage_change_profit(profit_dict: dict) -> float:
+    """
+    Calculates the total weighted percentage change for the portfolio.
 
-    percentage_change: float = 0
-    for key in profit_dict:
-        percentage_change += profit_dict[key]["percentage change"] * profit_dict[key]["percentage in portfolio"] / 100
-    
-    return percentage_change
+    The calculation follows the formula:
+    """
+    # Equation for Weighted Average Percentage Change:
+    # $$ \text{Total \% Change} = \sum_{i=1}^{n} (\text{Ticker \% Change}_i \times \text{Weight in Portfolio}_i) $$
 
-def update_percentage_in_portfolio(profit_dict: dict, total_final_value_in_portfolio: float) -> dict:
-    for key in profit_dict:
-        profit_dict[key]["percentage in portfolio"] = profit_dict[key]["final stock value in Portfolio"] / total_final_value_in_portfolio * 100 
+    total_percentage_change: float = 0
+    for ticker, metrics in profit_dict.items():
+        if ticker.lower() == "total":
+            continue
+
+        change = metrics.get("percentage change", 0)
+        weight = metrics.get("percentage in portfolio", 0)
+        total_percentage_change += (change * weight) / 100
+
+    return total_percentage_change
+def update_percentage_in_portfolio(profit_dict: dict, total_final_value: float) -> dict:
+    """
+    Updates the weight of each stock relative to the total portfolio value at the end date.
+
+    Args:
+        profit_dict (dict): Dictionary containing profit data.
+        total_final_value (float): The aggregate final market value of the portfolio.
+
+    Returns:
+        dict: The updated profit_dict with weights assigned.
+    """
+    if total_final_value == 0:
+        for ticker in profit_dict:
+            profit_dict[ticker]["percentage in portfolio"] = 0
+        return profit_dict
+
+    for ticker in profit_dict:
+        if ticker.lower() == "total":
+            continue
+        final_val = profit_dict[ticker]["final stock value in Portfolio"]
+        profit_dict[ticker]["percentage in portfolio"] = (final_val / total_final_value) * 100
 
     return profit_dict
-
 def create_all_profit_dict(profit_dict: dict) -> dict:
-
-    (total_amount_of_initial_stock, total_amount_of_final_stock) = calculate_total_amount_of_stock_profit(profit_dict)
-    (average_initial_price, average_final_price) = calculate_average_price_of_stock_profit(profit_dict, total_amount_of_initial_stock, total_amount_of_final_stock)
-    (total_initial_value_in_portfolio, total_final_value_in_portfolio) = calculate_total_value_in_portfolio_profit(profit_dict)
+    """
+    Aggregates all performance metrics into a 'total' summary row for the profit report.
+    """
+    # 1. Fetch aggregate metrics using helper functions
+    amounts = calculate_total_amount_of_stock_profit(profit_dict)
+    prices = calculate_average_price_of_stock_profit(profit_dict, amounts[0], amounts[1])
+    values = calculate_total_value_in_portfolio_profit(profit_dict)
     total_profit = calculate_profit_sum(profit_dict)
-    profit_dict = update_percentage_in_portfolio(profit_dict, total_final_value_in_portfolio)
-    percentage_change = calculate_percentage_change_profit(profit_dict)
-    
-    
 
+    # 2. Update weights and calculate total percentage change
+    profit_dict = update_percentage_in_portfolio(profit_dict, values[1])
+    total_perc_change = calculate_percentage_change_profit(profit_dict)
+
+    # 3. Commit the summary 'total' row
     profit_dict["total"] = {
-
-        "initial amount": 0,
-        "final amount": 0,
-        "initial price": 0,
-        "final price": 0,
-        "initial stock value in Portfolio": 0,
-        "final stock value in Portfolio": 0,
-        "profit": 0, 
-        "percentage change": 0,
-        "percentage in portfolio": 0,
+        "initial amount": amounts[0],
+        "final amount": amounts[1],
+        "initial price": prices[0],
+        "final price": prices[1],
+        "initial stock value in Portfolio": values[0],
+        "final stock value in Portfolio": values[1],
+        "profit": total_profit,
+        "percentage change": total_perc_change,
+        "percentage in portfolio": 100.0
     }
 
-    profit_dict["total"]["initial amount"] = total_amount_of_initial_stock
-    profit_dict["total"]["final amount"] = total_amount_of_final_stock
-    profit_dict["total"]["initial price"] = average_initial_price
-    profit_dict["total"]["final price"] = average_final_price
-    profit_dict["total"]['initial stock value in Portfolio'] = total_initial_value_in_portfolio
-    profit_dict["total"]['final stock value in Portfolio'] = total_final_value_in_portfolio
-    profit_dict["total"]['profit'] = total_profit
-    profit_dict['total']['percentage change'] = percentage_change
-    profit_dict['total']['percentage in portfolio'] = 100
-
-
     return profit_dict
-
-def main():
-    print("hell yes")
-
-if __name__ == "__main__":
-    main()
