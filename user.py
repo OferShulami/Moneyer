@@ -1,6 +1,5 @@
 import calculate_func
 
-
 class Account:
     """
     Represents an account for managing stock trades, including buying, selling, and portfolio tracking.
@@ -215,7 +214,6 @@ class Account:
         self.profit_dict = calculate_func.create_all_profit_dict(self.profit_dict)
         calculate_func.make_account_table(self.profit_dict)
 
-
 def main():
     calculate_func.setup_pd()
 
@@ -243,7 +241,6 @@ def main():
     print(f"\n{'-' * 20} PORTFOLIO SUMMARY {'-' * 20}")
     ofer.show_account_info()
     print(f"{'=' * 65}\n")
-
 
 if __name__ == '__main__':
     main()
