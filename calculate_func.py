@@ -66,25 +66,29 @@ def calculate_next_date(date_string: str, date_format: str = "%Y-%m-%d") -> str:
         return next_date.strftime(date_format)
     except ValueError as e:
         raise ValueError(f"Invalid date or format: {e}")
-def sub_date(start_date: str, end_date: str) -> tuple:
+def sub_date(start_date: str, end_date: str = "now") -> tuple:
     """
-    Standardizes and validates a pair of dates (start and end) using a helper function.
+    Standardizes a date range by ensuring both dates are valid NASDAQ trading days.
 
-    This function ensures that both input dates are processed through the 'sub_date_helper'
-    logic to handle business days, holidays, or formatting adjustments.
+    If end_date is set to "now", it uses the current system date. Both dates are
+    processed backwards using sub_date_helper until a valid trading day is found.
 
     Args:
-        start_date (str): The initial start date string.
-        end_date (str): The initial end date string.
+        start_date (str): The requested start date.
+        end_date (str): The requested end date (defaults to "now").
 
     Returns:
-        tuple: A tuple containing (processed_start_date, processed_end_date) as strings.
+        tuple: (validated_start_date, validated_end_date) as strings in 'YYYY-MM-DD'.
     """
-    # Note: Corrected the typo from 'halper' to 'helper'
-    start_date = sub_date_helper(start_date)
-    end_date = sub_date_helper(end_date)
+    # Fix: Convert "now" string to actual current date string
+    if end_date == "now":
+        end_date = now_date()
 
-    return (start_date, end_date)
+    # Adjust both dates to the nearest past trading day if necessary
+    validated_start = sub_date_helper(start_date)
+    validated_end = sub_date_helper(end_date)
+
+    return validated_start, validated_end
 def sub_date_helper(date: str) -> str:
     """
     Adjusts a given date backwards until a valid trading day is found.

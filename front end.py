@@ -1,109 +1,121 @@
 import calculate_func
-import user
+import user  # ודא שהקובץ user.py נמצא באותה תיקייה
 import getpass
 
-global USERNAME
-global PASSWORD
+# נתוני גישה מוגדרים מראש
+CREDENTIALS = {
+    "username": "OferShulami",
+    "password": "1"  # שנה לסיסמה שלך
+}
+
 
 def login() -> bool:
-
-    global USERNAME
-    global PASSWORD 
+    """ניהול תהליך ההתחברות למערכת"""
+    print(f"\n{'=' * 35}")
+    print("      WELCOME TO MONEYER")
+    print(f"{'=' * 35}")
 
     while True:
-        username = input("enter username: ")
-        password = input_password()
-        if username == USERNAME and password == PASSWORD:
+        username = input("Username: ")
+        password = getpass.getpass("Password: ")
+
+        if username == CREDENTIALS["username"] and password == CREDENTIALS["password"]:
+            print("\n[V] Login Successful!")
             return True
-        elif username != USERNAME and password == PASSWORD:
-            print("your username isn't correct\nplease try again")
-        elif username == USERNAME and password != PASSWORD:
-            print("your password isn't correct\nplease try again")
-            if try_again_password(USERNAME):
-                return True
-        else: 
-            print("your username and password isn't correct\nplease try again")
+        else:
+            print("[X] Invalid credentials. Please try again.\n")
 
 
-def try_again_password(correct_username) -> bool:
-    global PASSWORD
-    print(f"username: {correct_username}")
-    password = input_password()
-    if password == PASSWORD:
-        return True
-    else: 
-        print("your password isn;t correct\nplease try again")
-        return False
+def print_menu() -> str:
+    """הצגת תפריט האפשרויות הראשי"""
+    print(f"\n{'-' * 35}")
+    print("MAIN MENU:")
+    print("a - Buy or Sell Stocks")
+    print("s - Show Portfolio Status")
+    print("p - Show Profit Report")
+    print("q - Logout & Exit")
+    return input("\nChoose an option: ").lower()
 
-def input_password() -> str:
-
-    password = getpass.getpass("Enter your password: ")
-    return password
-
-def print_menu_and_input_option() -> str:
-
-    print("\nSelect your option:")
-    print("a - For buy or sell")
-    print("s - For show account details")
-    print("q - For logout")
-
-    option = input("Choose an option: ")
-
-    return option
 
 def main():
-    
-    
-    global USERNAME
-    global PASSWORD
+    # אתחול הגדרות Pandas לתצוגה יפה בטרמינל
+    calculate_func.setup_pd()
 
-    USERNAME = "OferShulami"
-    PASSWORD = "12345678"
-    log = 0
-    ofer = None  # Initialize the account object here
+    is_logged_in = False
+    ofer_account = None
 
     while True:
-        # Check if the user is logged in
-        if log == 0:
+        # שלב 1: התחברות
+        if not is_logged_in:
             if login():
-                ofer = user.Account(USERNAME, PASSWORD)  # Create account object
-                log = 1  # Set login status to 1 after successful login
-
-        if log == 1:  # Once logged in, show options
-
-            option = print_menu_and_input_option()
-
-            if option == "a":
-                a = 0
-                while a == 0:
-                    answer = input("for buy select b and for sell select s\nto go back press q")
-
-                    if answer == "b":
-                        a = 1
-                        ticker = input("tiker: ")
-                        amount = int(input("amount: "))
-                        price = float(input("price per stock: "))
-                        date = input("the date in YYYY-MM-DD format: ")
-                    elif answer == "s":
-                        a = 1
-                        print("not avalible yet")
-                    elif answer == "q":
-                        a = 1
-                        print("returning to the menu")
-
-                    else:
-                        print("Invalid\nplease try again")
-
-            elif option == "s":
-                # Show account details
-                print(f"Account details for {ofer.name}:")
-                # Add account details logic here, e.g., display stock holdings, portfolio status, etc.
-            elif option == "q":
-                print("Logging out...")
-                log = 0  # Reset login status to log out
-                ofer = None  # Clear the account object
+                # יצירת אובייקט החשבון
+                ofer_account = user.Account(CREDENTIALS["username"], CREDENTIALS["password"])
+                is_logged_in = True
             else:
-                print("Invalid option. Please try again.")
+                continue
+
+        # שלב 2: תפריט פעולות
+        option = print_menu()
+
+        if option == "a":
+            # תפריט קנייה/מכירה
+            action = input("\n[b] Buy | [s] Sell | [q] Back: ").lower()
+
+            if action == "q":
+                continue
+
+            try:
+                ticker = input("Ticker (e.g., AAPL): ").upper()
+                amount = int(input("Amount of shares: "))
+
+                # בחירה בין הזנה ידנית למשיכה אוטומטית
+                print("\nWould you like to enter price/date manually?")
+                print("(If 'n', system will fetch current market price automatically)")
+                choice = input("Manual entry? (y/n): ").lower()
+
+                price = None
+                date = None
+
+                if choice == 'y':
+                    price = float(input("Enter Price: "))
+                    date = input("Enter Date (YYYY-MM-DD): ")
+
+                if action == "b":
+                    print(f"[*] Processing Buy for {ticker}...")
+                    ofer_account.buy_stock(ticker, amount, price, date)
+                    print("[V] Transaction Successful.")
+
+                elif action == "s":
+                    print(f"[*] Processing Sell for {ticker}...")
+                    ofer_account.sell_stock(ticker, amount, price, date)
+                    print("[V] Transaction Successful.")
+
+            except ValueError as e:
+                print(f"\n[!] Input Error: {e}")
+            except Exception as e:
+                print(f"\n[!] Error: {e}")
+
+        elif option == "s":
+            print(f"\n{'*' * 10} Current Portfolio {'*' * 10}")
+            ofer_account.show_account_info()
+
+        elif option == "p":
+            start_d = input("Enter start date (YYYY-MM-DD) or press Enter for 'all time': ")
+            if not start_d:
+                # מציג רווח מתחילת הפעילות
+                ofer_account.show_profit()
+            else:
+                # מציג רווח מתאריך ספציפי ועד היום
+                ofer_account.show_profit(start_date=start_d)
+
+        elif option == "q":
+            print("\nLogging out... See you next time!")
+            is_logged_in = False
+            ofer_account = None
+            break
+
+        else:
+            print("\n[!] Invalid option. Please try again.")
 
 
 if __name__ == "__main__":
